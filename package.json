@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "license": "MIT",
   "bin": {
-    "rollbar": "bin/rollbar"
+    "rollbar-cli": "bin/rollbar"
   },
   "scripts": {
     "lint": "./node_modules/.bin/eslint . --ext .js"
