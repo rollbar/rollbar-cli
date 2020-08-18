@@ -4,52 +4,29 @@ const Scanner = require('./scanner');
 const Uploader = require('./uploader');
 const Output = require('../common/output.js');
 
-exports.command = 'sourcemaps [options]'
+exports.command = 'upload-sourcemaps <path> [options]'
 
 exports.describe = 'upload sourcemaps'
 
 exports.builder = function (yargs) {
-  return yargs.option('p', {
-    alias: 'path',
-    describe: 'the path to scan for minified js and map files',
-    requiresArg: true,
-    type: 'string',
-    demandOption: true
-  })
-  .option('t', {
-    alias: 'token',
+  return yargs
+  .option('access-token', {
     describe: 'Access token for the Rollbar API',
     requiresArg: true,
     type: 'string',
     demandOption: true
   })
-  .option('b', {
-    alias: 'baseUrl',
+  .option('url-prefix', {
     describe: 'Base part of the stack trace URLs',
     requiresArg: true,
     type: 'string',
     demandOption: true
   })
-  .option('V', {
-    alias: 'validate',
-    describe: 'Validate source maps without uploading',
-    requiresArg: false,
-    type: 'boolean',
-    demandOption: false
-  })
-  .option('c', {
-    alias: 'codeVersion',
-    describe: 'Code version string must match value in the Rollbat item',
+  .option('code-version', {
+    describe: 'Code version string must match value in the Rollbar item',
     requiresArg: true,
     type: 'string',
     demandOption: true
-  })
-  .option('s', {
-    alias: 'sources',
-    describe: 'Include original sources',
-    requiresArg: false,
-    type: 'boolean',
-    demandOption: false
   })
 }
 
@@ -66,15 +43,13 @@ exports.handler = async function (argv) {
 
   await scanner.scan();
 
-  if (!argv['validate']) {
-    const uploader = new Uploader({
-      accessToken: argv['token'],
-      baseUrl: argv['baseUrl'],
-      codeVersion: argv['codeVersion']
-    })
+  const uploader = new Uploader({
+    accessToken: argv['access-token'],
+    baseUrl: argv['url-prefix'],
+    codeVersion: argv['code-version']
+  })
 
-    uploader.mapFiles(scanner.files);
+  uploader.mapFiles(scanner.files);
 
-    await uploader.upload();
-  }
+  await uploader.upload();
 }
