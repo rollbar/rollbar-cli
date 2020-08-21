@@ -17,7 +17,14 @@ class Uploader {
     return this;
   }
 
-  async upload() {
+  async upload(dryRun) {
+    if (dryRun) {
+      // TODO: Maybe more can be done here, but the important part is just to
+      // return without sending. The bulk of validation is done earlier
+      // in the scanning phase.
+      return this.files;
+    }
+
     for (const file of this.files) {
       output.status('Upload', file.mapPathName);
 

@@ -28,6 +28,13 @@ exports.builder = function (yargs) {
     type: 'string',
     demandOption: true
   })
+  .option('D', {
+    alias: 'dry-run',
+    describe: 'Scan and validate source maps without uploading',
+    requiresArg: false,
+    type: 'boolean',
+    demandOption: false
+  })
 }
 
 exports.handler = async function (argv) {
@@ -51,5 +58,5 @@ exports.handler = async function (argv) {
 
   uploader.mapFiles(scanner.files);
 
-  await uploader.upload();
+  await uploader.upload(argv['dry-run']);
 }
