@@ -59,7 +59,12 @@ class Scanner {
           file.mapData = data;
           file.map = JSON.parse(file.mapData);
           file.sources = (this.sources && file.map.sources) ? await this.originalSources(file) : {};
-          file.validated = await this.validate(file);
+          const errors = await this.validate(file);
+          if (errors && errors.length) {
+            file.errors.push(...errors);
+          } else {
+            file.validated = true;
+          }
         } else {
           output.warn('', 'map data not valid');
         }
@@ -115,6 +120,7 @@ class Scanner {
 
   async validate(file) {
     const map = file.map;
+    const errors = [];
 
     file.metadata.version =  map.version;
     file.metadata.file =  map.file;
@@ -126,13 +132,19 @@ class Scanner {
       file.metadata.sources = map.sources;
     }
 
-    const consumer = await new BasicSourceMapConsumer(map);
-    const mappings = {};
-    consumer.eachMapping(function (m) {
-      mappings[m.generatedLine] = true;
-    });
+    // For now, validation is lightweight and just answers the question:
+    // Is this a valid source map at all?
+    // BasicSourceMapConsumer will complain if not, so load it up and see if it throws.
+    try {
+      await new BasicSourceMapConsumer(map);
+    } catch (e) {
+      errors.push({
+        error: 'Error parsing map file: ' + e.message,
+        file: file
+      });
+    }
 
-    return true;
+    return errors;
   }
 
   mappedFiles() {

@@ -29,6 +29,10 @@ describe('Scanner()', function() {
 });
 
 describe('.scan()', function() {
+  beforeEach(function(){
+    global.output = new Output({verbose: false});
+  })
+
   it('should scan and load files from a directory', async function() {
     const options = {
       targetPath: './test/fixtures/builds/react16/build',
@@ -125,5 +129,17 @@ describe('.scan()', function() {
     expect(files[9].fileName).to.have.string('vendor-es5.js');
     expect(files[9].sourceMappingURL).to.be.true;
     expect(files[9].errors).to.be.an('array').that.is.empty;
+  });
+
+  it('should return parsing errors', async function() {
+    const options = {
+      targetPath: './test/fixtures/builds/invalid'
+    };
+    const scanner = new Scanner(options);
+    await scanner.scan();
+    const files = scanner.mappedFiles();
+
+    expect(files[0].errors[0].error).to.have.string('Error parsing map file: Unexpected token $ in JSON at position 24');
+    expect(files[1].errors[0].error).to.have.string('Error parsing map file: "sources" is a required argument');
   });
 });
