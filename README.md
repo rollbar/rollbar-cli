@@ -1,5 +1,7 @@
 # rollbar-cli
 
+![build](https://github.com/rollbar/rollbar-cli/workflows/Node.js%20CI/badge.svg)
+
 The Rollbar CLI provides easy command line access to Rollbar's API features,
 starting with source map uploads.
 
