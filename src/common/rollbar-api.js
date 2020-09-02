@@ -16,6 +16,35 @@ class RollbarAPI {
     });
   }
 
+  async deploy(request, deployId) {
+    const form = this.convertDeployRequestToForm(request);
+    let resp;
+    if(deployId) {
+      output.verbose('', 'Update to an existing deploy with deploy_id: ' + deployId);
+      resp = await this.axios.patch(
+        '/deploy/' + deployId,
+        form.getBuffer(), // use buffer to prevent unwanted string escaping.
+        { headers: {
+          // axios needs some help with headers for form data.
+          'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
+          'Content-Length': form.getLengthSync()
+        }}
+      );
+    } else {
+      output.verbose('','deploy_id not present so likely a new deploy');
+      resp = await this.axios.post(
+        '/deploy',
+        form.getBuffer(), // use buffer to prevent unwanted string escaping.
+        { headers: {
+          // axios needs some help with headers for form data.
+          'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
+          'Content-Length': form.getLengthSync()
+        }}
+      );
+    }
+    return this.processResponse(resp);
+  }
+
   async sourcemaps(request) {
     output.verbose('', 'minified_url: ' + request.minified_url);
 
@@ -31,6 +60,17 @@ class RollbarAPI {
     );
 
     return this.processResponse(resp);
+  }
+
+  convertDeployRequestToForm(request) {
+    const form = new FormData();
+    form.append('revision', request.revision);
+    form.append('environment', request.environment);
+    if(request.status)
+      form.append('status', request.status);
+    if(request.username)
+      form.append('rollbar_username', request.username);
+    return form;
   }
 
   convertRequestToForm(request) {
@@ -55,7 +95,6 @@ class RollbarAPI {
     if (resp.status === 200) {
       return null;
     }
-
     return resp.data;
   }
 }
