@@ -19,6 +19,7 @@ function cli() {
       demandOption: false
     })
     .command(require('./sourcemaps/command'))
+    .command(require('./deploy/command'))
       .help()
       .argv
 
