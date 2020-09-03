@@ -69,7 +69,7 @@ class RollbarAPI {
     if(request.status)
       form.append('status', request.status);
     if(request.username)
-      form.append('rollbar_username', request.username);
+      form.append('rollbar_username', request.rollbar_username);
     return form;
   }
 

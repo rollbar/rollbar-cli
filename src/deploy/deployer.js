@@ -32,7 +32,7 @@ class Deployer {
       revision: this.version,
       environment: this.env,
       status: this.status,
-      username: this.username
+      rollbar_username: this.username
     }
   }
 }
