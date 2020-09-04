@@ -13,4 +13,17 @@ describe('rollbar-cli notify-deploy', function() {
       done();
     })
   });
+
+  it('should handle error response', done => {
+    this.timeout(5000);
+
+    const stdout = execSync('./bin/rollbar notify-deploy --access-token 1234 --code-version 1.0.1 --environment production --username foobar --status succeeded --deploy-id 12345678');
+
+    const lines = stdout.toString().split('\n');
+
+    expect(lines.length).to.equal(2);
+    expect(stdout.toString()).to.have.string('invalid access token');
+
+    done();
+  });
 });
