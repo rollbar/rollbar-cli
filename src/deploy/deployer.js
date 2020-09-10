@@ -20,7 +20,7 @@ class Deployer {
     try {
       error = await this.rollbarAPI.deploy(this.buildRequest(), this.deploy_id);
     } catch (e) {
-      error = e.message
+      error = e.message;
     }
 
     if (error)
