@@ -42,6 +42,10 @@ class RollbarAPI {
         }}
       );
     }
+
+    if (resp.status === 200) {
+      output.success('', resp.data.data);
+    }
     return this.processResponse(resp);
   }
 
@@ -68,8 +72,12 @@ class RollbarAPI {
     form.append('environment', request.environment);
     if(request.status)
       form.append('status', request.status);
-    if(request.username)
+    if(request.rollbar_username)
       form.append('rollbar_username', request.rollbar_username);
+    if(request.local_username)
+      form.append('local_username', request.local_username);
+    if(request.comment)
+      form.append('comment', request.comment);
     return form;
   }
 

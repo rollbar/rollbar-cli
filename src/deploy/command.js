@@ -10,37 +10,49 @@ exports.describe = 'Notify deploy to Rollbar'
 exports.builder = function (yargs) {
   return yargs
   .option('access-token', {
-    describe: 'Access token for the Rollbar API',
+    describe: 'Use a post server item access token for the Rollbar API',
     requiresArg: true,
     type: 'string',
     demandOption: true
   })
   .option('code-version', {
-    describe: 'Code version string must match value in the Rollbar item',
+    describe: 'Code version or Git SHA of revision being deployed',
     requiresArg: true,
     type: 'string',
     demandOption: true
   })
   .option('deploy-id', {
-    describe: 'deploy id to update the status of a particular deploy',
+    describe: 'ID of the deploy to update',
     requiresArg: false,
     type: 'string',
     demandOption: false
   })
   .option('environment', {
-    describe: 'Name of the environment such as production, staging',
+    describe: 'Environment to which the revision was deployed such as production',
     requiresArg: true,
     type: 'string',
     demandOption: true
   })
   .option('status', {
-    describe: 'deploy status such as started, succeeded',
+    describe: 'Status of the deploy - started, succeeded (default), failed, or timed_out',
     requiresArg: false,
     type: 'string',
     demandOption: false
   })
-  .option('username', {
-    describe: 'Rollbar username',
+  .option('rollbar-username', {
+    describe: 'Rollbar username of person who deployed',
+    requiresArg: false,
+    type: 'string',
+    demandOption: false
+  })
+  .option('local-username', {
+    describe: 'Local username of person who deployed',
+    requiresArg: false,
+    type: 'string',
+    demandOption: false
+  })
+  .option('comment', {
+    describe: 'Additional text to include with the deploy',
     requiresArg: false,
     type: 'string',
     demandOption: false
@@ -59,7 +71,9 @@ exports.handler = async function (argv) {
     deployId: argv['deploy-id'],
     environment: argv['environment'],
     status: argv['status'],
-    username: argv['username']
+    rollbarUsername: argv['rollbar-username'],
+    localUsername: argv['local-username'],
+    comment: argv['comment']
   })
 
   await deployer.deploy();

@@ -3,10 +3,10 @@
 ![build](https://github.com/rollbar/rollbar-cli/workflows/Node.js%20CI/badge.svg)
 
 The Rollbar CLI provides easy command line access to Rollbar's API features,
-starting with source map uploads.
+starting with source map uploads and notifying deploys.
 
 ## Usage and Reference
-Currently the upload-sourcemaps command is supported.
+Currently upload-sourcemaps and notify-deploy commands are supported.
 
 ### upload-sourcemaps
 Upload source maps recursively from a directory.
@@ -33,6 +33,43 @@ Example:
 rollbar-cli upload-sourcemaps ./dist -access-token 638d... --url-prefix 'http://example.com/' --code-version 123.456
 ```
 
+### notify-deploy
+Notify deploy to Rollbar.
+
+```
+rollbar-cli notify-deploy [options]
+
+Notify deploy to Rollbar
+
+Options:
+  --version           Show version number                              [boolean]
+  -v, --verbose       Verbose status output                            [boolean]
+  -q, --quiet         Silent status output                             [boolean]
+  --help              Show help                                        [boolean]
+  --access-token      Use a post server item access token for the Rollbar API
+                                                             [string] [required]
+  --code-version      Code version or Git SHA of revision being deployed
+                                                             [string] [required]
+  --deploy-id         ID of the deploy to update                        [string]
+  --environment       Environment to which the revision was deployed such as
+                      production                             [string] [required]
+  --status            Status of the deploy - started, succeeded (default),
+                      failed, or timed_out                              [string]
+  --rollbar-username  Rollbar username of person who deployed           [string]
+  --local-username    Local username of person who deployed             [string]
+  --comment           Additional text to include with the deploy        [string]
+```
+
+Example:
+```
+rollbar-cli notify-deploy --access-token 1234 --code-version 1.0.1 --environment production --rollbar-username foobar --status succeeded --local-username foo_bar --comment 'Deploy Test'
+```
+
+Output on success:
+```
+         { deploy_id: 12345678 }
+         Deploy successful
+```
 
 ## Release History & Changelog
 

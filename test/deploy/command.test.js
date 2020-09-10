@@ -18,7 +18,7 @@ describe('deploy Command()', function() {
   });
 
   afterEach(function() {
-    //global.output = null;
+    global.output = null;
     this.currentTest.stubWarn.restore();
     this.currentTest.stubSuccess.restore();
   });

@@ -8,9 +8,11 @@ class Deployer {
     this.rollbarAPI = new RollbarAPI(options.accessToken);
     this.version = options.codeVersion;
     this.deploy_id = options.deployId;
-    this.env = options.environment;
+    this.environment = options.environment;
     this.status = options.status;
-    this.username = options.username;
+    this.rollbar_username = options.rollbarUsername;
+    this.local_username = options.localUsername;
+    this.comment = options.comment;
   }
 
   async deploy() {
@@ -30,9 +32,11 @@ class Deployer {
   buildRequest() {
     return {
       revision: this.version,
-      environment: this.env,
+      environment: this.environment,
       status: this.status,
-      rollbar_username: this.username
+      rollbar_username: this.rollbar_username,
+      local_username: this.local_username,
+      comment: this.comment
     }
   }
 }

@@ -126,7 +126,9 @@ describe('.deploy() without deployId', function() {
       revision: '123',
       environment: 'production',
       status: '',
-      rollbar_username: ''
+      rollbar_username: '',
+      local_username: '',
+      comment: ''
     };
 
     const deployId = '';
@@ -157,7 +159,9 @@ describe('.deploy() without deployId', function() {
       revision: '123',
       environment: 'production',
       status: 'started',
-      rollbar_username: 'foobar'
+      rollbar_username: 'foobar',
+      local_username: 'foo_bar',
+      comment: 'Deploy Test'
     };
 
     const deployId = '';
@@ -171,7 +175,7 @@ describe('.deploy() without deployId', function() {
     expect(body[0]).to.equal('/deploy');
     expect(body[1]).to.be.a('Uint8Array'); // This is how Chai sees the Buffer type
     expect(body[2].headers['Content-Type']).to.have.string('multipart/form-data; boundary=--------------------------');
-    expect(body[2].headers['Content-Length']).to.equal(398);
+    expect(body[2].headers['Content-Length']).to.equal(756);
   });
 
   it('should handle deploy error response', async function() {
@@ -188,7 +192,9 @@ describe('.deploy() without deployId', function() {
       revision: '',
       environment: '',
       status: '',
-      rollbar_username: ''
+      rollbar_username: '',
+      local_username: '',
+      comment: ''
     };
 
     const deployId = '';
@@ -230,7 +236,9 @@ describe('.deploy() with deployId', function() {
       revision: '123',
       environment: 'production',
       status: 'succeeded',
-      rollbar_username: 'foobar'
+      rollbar_username: 'foobar',
+      local_username: 'foo_bar',
+      comment: 'comment'
     };
 
     const deployId = '12345678';
@@ -244,7 +252,7 @@ describe('.deploy() with deployId', function() {
     expect(body[0]).to.equal('/deploy/12345678');
     expect(body[1]).to.be.a('Uint8Array'); // This is how Chai sees the Buffer type
     expect(body[2].headers['Content-Type']).to.have.string('multipart/form-data; boundary=--------------------------');
-    expect(body[2].headers['Content-Length']).to.equal(400);
+    expect(body[2].headers['Content-Length']).to.equal(754);
   });
 });
 

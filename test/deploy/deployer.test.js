@@ -16,15 +16,19 @@ describe('Deployer()', function() {
       deployId: '12345678',
       environment: 'production',
       status: 'succeeded',
-      username: 'foobar'
+      rollbarUsername: 'foobar',
+      localUsername: 'foo_bar',
+      comment: 'Deploy Test'
     };
     const deployer = new Deployer(options);
 
     expect(deployer.version).to.equal(options.codeVersion);
     expect(deployer.deploy_id).to.equal(options.deployId);
-    expect(deployer.env).to.equal(options.environment);
+    expect(deployer.environment).to.equal(options.environment);
     expect(deployer.status).to.equal(options.status);
-    expect(deployer.username).to.equal(options.username);
+    expect(deployer.rollbar_username).to.equal(options.rollbarUsername);
+    expect(deployer.local_username).to.equal(options.localUsername);
+    expect(deployer.comment).to.equal(options.comment);
     expect(deployer).to.have.property('rollbarAPI');
     expect(deployer.rollbarAPI.accessToken).to.equal(options.accessToken);
   });
