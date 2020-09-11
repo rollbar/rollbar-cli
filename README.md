@@ -64,3 +64,7 @@ To set up a development environment, you'll need Node.js and npm.
 3. Commit your changes (`git commit -am 'Added some feature'`).
 4. Push to the branch (`git push origin my-new-feature`).
 5. Create a new Pull Request.
+
+## License
+
+rollbar-cli is free software released under the MIT License. See LICENSE for details.
