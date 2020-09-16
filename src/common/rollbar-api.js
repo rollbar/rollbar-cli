@@ -17,32 +17,16 @@ class RollbarAPI {
   }
 
   async deploy(request, deployId) {
-    const form = this.convertDeployRequestToForm(request);
     let resp;
     if(deployId) {
       output.verbose('', 'Update to an existing deploy with deploy_id: ' + deployId);
-      resp = await this.axios.patch(
-        '/deploy/' + deployId,
-        form.getBuffer(), // use buffer to prevent unwanted string escaping.
-        { headers: {
-          // axios needs some help with headers for form data.
-          'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
-          'Content-Length': form.getLengthSync()
-        }}
-      );
+      resp = await this.axios.patch('/deploy/' + deployId, request);
     } else {
       output.verbose('','deploy_id not present so likely a new deploy');
-      resp = await this.axios.post(
-        '/deploy',
-        form.getBuffer(), // use buffer to prevent unwanted string escaping.
-        { headers: {
-          // axios needs some help with headers for form data.
-          'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
-          'Content-Length': form.getLengthSync()
-        }}
-      );
+      resp = await this.axios.post('/deploy', request);
     }
 
+    // Output deploy-id
     if (resp.status === 200) {
       output.success('', resp.data.data);
     }
@@ -64,21 +48,6 @@ class RollbarAPI {
     );
 
     return this.processResponse(resp);
-  }
-
-  convertDeployRequestToForm(request) {
-    const form = new FormData();
-    form.append('revision', request.revision);
-    form.append('environment', request.environment);
-    if(request.status)
-      form.append('status', request.status);
-    if(request.rollbar_username)
-      form.append('rollbar_username', request.rollbar_username);
-    if(request.local_username)
-      form.append('local_username', request.local_username);
-    if(request.comment)
-      form.append('comment', request.comment);
-    return form;
   }
 
   convertRequestToForm(request) {

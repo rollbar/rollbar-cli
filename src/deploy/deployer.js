@@ -1,7 +1,6 @@
 'use strict';
 
 const RollbarAPI = require('../common/rollbar-api');
-const URL = require('url').URL;
 
 class Deployer {
   constructor(options) {
