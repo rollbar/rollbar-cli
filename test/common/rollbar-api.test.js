@@ -140,9 +140,7 @@ describe('.deploy() without deployId', function() {
 
     const body = stub.getCall(0).args;
     expect(body[0]).to.equal('/deploy');
-    expect(body[1]).to.be.a('Uint8Array'); // This is how Chai sees the Buffer type
-    expect(body[2].headers['Content-Type']).to.have.string('multipart/form-data; boundary=--------------------------');
-    expect(body[2].headers['Content-Length']).to.equal(286);
+    expect(body[1]).to.be.a('object');
   });
 
   it('should handle pre-deploy', async function() {
@@ -173,9 +171,7 @@ describe('.deploy() without deployId', function() {
 
     const body = stub.getCall(0).args;
     expect(body[0]).to.equal('/deploy');
-    expect(body[1]).to.be.a('Uint8Array'); // This is how Chai sees the Buffer type
-    expect(body[2].headers['Content-Type']).to.have.string('multipart/form-data; boundary=--------------------------');
-    expect(body[2].headers['Content-Length']).to.equal(756);
+    expect(body[1]).to.be.a('object');
   });
 
   it('should handle deploy error response', async function() {
@@ -250,9 +246,7 @@ describe('.deploy() with deployId', function() {
 
     const body = stub.getCall(0).args;
     expect(body[0]).to.equal('/deploy/12345678');
-    expect(body[1]).to.be.a('Uint8Array'); // This is how Chai sees the Buffer type
-    expect(body[2].headers['Content-Type']).to.have.string('multipart/form-data; boundary=--------------------------');
-    expect(body[2].headers['Content-Length']).to.equal(754);
+    expect(body[1]).to.be.a('object'); // This is how Chai sees the Buffer type
   });
 });
 
