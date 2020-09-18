@@ -13,6 +13,9 @@ class RollbarAPI {
       // Always resolve, regardless of status code.
       // When we let axios reject, we end up with less specific error messages.
       validateStatus: function (_status) { return true; },
+      // Let axios send anything, and let the API decide what the max length should be.
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
     });
   }
 
