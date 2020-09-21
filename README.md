@@ -30,7 +30,7 @@ Options:
 
 Example:
 ```
-rollbar-cli upload-sourcemaps ./dist -access-token 638d... --url-prefix 'http://example.com/' --code-version 123.456
+rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http://example.com/' --code-version 123.456
 ```
 
 ### notify-deploy
