@@ -28,6 +28,24 @@ Options:
   -D, --dry-run   Scan and validate source maps without uploading      [boolean]
 ```
 
+Some of these options are required and must be specified for a successful upload.
+
+`path`: Absolute or relative path to build directory. This directory should contain .js
+files with `sourceMappingURL` directives included. The current version of the CLI
+supports detecting files with `sourceMappingURL` directives and uploading related
+map files within a directory.
+
+`--access-token`: The Rollbar API `post_server_item` token.
+
+`--url-prefix`: The base portion of the URL to be concatenated with the js filenames
+discovered while scanning `path`. The Rollbar backend uses this to match stack frame locations
+and it must exactly match the URLs in the error stack frames. See `minified_url` at
+[Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
+
+`--code-version`: The code version string must match the string passed in the Rollbar
+error payload, which is usually set in the config options for Rollbar.js.
+See [Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
+
 Example:
 ```
 rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http://example.com/' --code-version 123.456
