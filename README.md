@@ -5,6 +5,12 @@
 The Rollbar CLI provides easy command line access to Rollbar's API features,
 starting with source map uploads and notifying deploys.
 
+## Install
+
+```
+npm install -g rollbar-cli
+```
+
 ## Usage and Reference
 Currently upload-sourcemaps and notify-deploy commands are supported.
 
