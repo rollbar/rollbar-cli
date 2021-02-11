@@ -1,7 +1,9 @@
 'use strict';
 
+const AdmZip = require('adm-zip');
 const RollbarAPI = require('../common/rollbar-api');
 const URL = require('url').URL;
+const path = require('path');
 
 class Uploader {
   constructor(options) {
@@ -15,6 +17,18 @@ class Uploader {
     this.files = files;
 
     return this;
+  }
+
+  zipFiles(targetPath) {
+    const zipFile = new AdmZip();
+    const fs = require('fs');
+
+    for (const file of this.files) {
+      //output.status('Upload', file);
+      zipFile.addLocalFile(file.filePathName);
+    }
+    const outFile = path.join(targetPath, 'output.zip');
+    fs.writeFileSync(outFile, zipFile.toBuffer());
   }
 
   async upload(dryRun) {

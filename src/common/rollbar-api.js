@@ -1,4 +1,5 @@
 'use strict';
+var https = require('https');
 
 const axios = require('axios');
 const FormData = require('form-data');
@@ -8,7 +9,8 @@ class RollbarAPI {
     this.accessToken = accessToken;
 
     this.axios = axios.create({
-      baseURL: 'https://api.rollbar.com/api/1/',
+      baseURL: 'https://127.0.0.1/api/1/',
+      //baseURL: 'https://api.rollbar.com/api/1/',
       headers: { 'X-Rollbar-Access-Token': accessToken },
       // Always resolve, regardless of status code.
       // When we let axios reject, we end up with less specific error messages.
@@ -37,17 +39,21 @@ class RollbarAPI {
   }
 
   async sourcemaps(request) {
-    output.verbose('', 'minified_url: ' + request.minified_url);
 
-    const form = this.convertRequestToForm(request);
+    //const form = this.convertRequestToForm(request);
+    const json = JSON.stringify({ version: request.version , base_url: request.baseUrl});
+
     const resp = await this.axios.post(
-      '/sourcemap',
-      form.getBuffer(), // use buffer to prevent unwanted string escaping.
-      { headers: {
-        // axios needs some help with headers for form data.
-        'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
-        'Content-Length': form.getLengthSync()
-      }}
+      '/sourcemap', json,
+        {
+          httpsAgent: new https.Agent({
+            rejectUnauthorized: false
+          }),
+          headers: {
+            // axios needs some help with headers for form data.
+            'Content-Type': 'application/json'
+          }
+        },
     );
 
     return this.processResponse(resp);

@@ -2,6 +2,7 @@
 
 const Scanner = require('./scanner');
 const Uploader = require('./uploader');
+const Requester = require('./requester');
 const Output = require('../common/output.js');
 
 exports.command = 'upload-sourcemaps <path> [options]'
@@ -50,13 +51,20 @@ exports.handler = async function (argv) {
 
   await scanner.scan();
 
-  const uploader = new Uploader({
+  const requester = new Requester({
     accessToken: argv['access-token'],
     baseUrl: argv['url-prefix'],
     codeVersion: argv['code-version']
   })
 
+  const uploader = new Uploader({
+    accessToken: argv['access-token'],
+    baseUrl: argv['url-prefix'],
+    codeVersion: argv['code-version']
+  })
+  requester.requestSignedUrl()
   uploader.mapFiles(scanner.files);
-
-  await uploader.upload(argv['dry-run']);
+  uploader.zipFiles(scanner.targetPath);
+  //
+  // await uploader.upload(argv['dry-run']);
 }

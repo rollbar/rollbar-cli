@@ -6,10 +6,11 @@
     "rollbar-cli": "bin/rollbar"
   },
   "scripts": {
-    "lint": "./node_modules/.bin/eslint . --ext .js",
+    "lint": "eslint . --ext .js",
     "test": "nyc --reporter=html --reporter=text mocha './test/{,!(fixtures)/**/}*test.js'"
   },
   "dependencies": {
+    "adm-zip": "^0.5.2",
     "axios": "^0.19.2",
     "chalk": "^4.1.0",
     "form-data": "^3.0.0",
@@ -23,5 +24,20 @@
     "mocha": "^7.2.0",
     "nyc": "^15.1.0",
     "sinon": "^9.0.3"
-  }
+  },
+  "description": "![build](https://github.com/rollbar/rollbar-cli/workflows/Node.js%20CI/badge.svg)",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rollbar/rollbar-cli.git"
+  },
+  "keywords": [],
+  "author": "",
+  "bugs": {
+    "url": "https://github.com/rollbar/rollbar-cli/issues"
+  },
+  "homepage": "https://github.com/rollbar/rollbar-cli#readme"
 }
