@@ -47,7 +47,7 @@ describe('.sourcemaps()', function() {
 
     const request = {
       version: '123',
-      minified_url: 'https://example.com/foo.js',
+      prefix_url: 'https://example.com/',
       source_map: '{ \
         "version" : 3, \
         "file": "out.js", \
@@ -62,14 +62,13 @@ describe('.sourcemaps()', function() {
 
     const response = await rollbarAPI.sourcemaps(request);
 
-    expect(response).to.be.null;
+    expect(response).to.be.not.null;
     expect(stub.calledOnce).to.be.true;
 
     const body = stub.getCall(0).args;
-    expect(body[0]).to.equal('/sourcemap');
-    expect(body[1]).to.be.a('Uint8Array'); // This is how Chai sees the Buffer type
-    expect(body[2].headers['Content-Type']).to.have.string('multipart/form-data; boundary=--------------------------');
-    expect(body[2].headers['Content-Length']).to.equal(726);
+    expect(body[0]).to.equal('/signed_url/sourcemaps');
+    expect(body[1]).to.be.a('String'); // This is how Chai sees the Buffer type
+    expect(body[2].headers['Content-Type']).to.have.string('application/json');
   });
 
   it('should handle error responses', async function() {

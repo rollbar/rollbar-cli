@@ -26,7 +26,7 @@ class Scanner {
       output.status('Found', file.filePathName);
 
       this.extractMapPath(file);
-      //await this.loadMapData(file);
+      await this.validateData(file);
 
       for(const error of file.errors) {
         output.warn('Error', error.error);
@@ -42,12 +42,14 @@ class Scanner {
       output.status('', mapPath);
       file.mapPathName = mapPath;
       file.sourceMappingURL = true;
+      file.mappedFile = path.join(this.targetPath, mapPath);
+
     } else {
       output.warn('', 'map not found');
     }
   }
 
-  async loadMapData(file) {
+  async validateData(file) {
     if (file.mapPathName) {
       try {
         const filePath = path.dirname(file.filePathName);
@@ -55,8 +57,7 @@ class Scanner {
         const data = fs.readFileSync(mapPath).toString();
 
         if (data) {
-          file.mapData = data;
-          file.map = JSON.parse(file.mapData);
+          file.map = JSON.parse(data);
           file.sources = (this.sources && file.map.sources) ? await this.originalSources(file) : {};
           const errors = await this.validate(file);
           if (errors && errors.length) {
@@ -168,7 +169,6 @@ class Scanner {
       fileName: path.relative(this.targetPath, filePathName),
       sourceMappingURL: false,
       mapPathName: null,
-      mapData: null,
       validated: false,
       metadata: {},
       errors: []

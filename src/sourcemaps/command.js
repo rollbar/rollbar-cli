@@ -57,14 +57,14 @@ exports.handler = async function (argv) {
     codeVersion: argv['code-version']
   })
 
-  const uploader = new Uploader({
-    accessToken: argv['access-token'],
-    baseUrl: argv['url-prefix'],
-    codeVersion: argv['code-version']
-  })
-  requester.requestSignedUrl()
-  uploader.mapFiles(scanner.files);
-  uploader.zipFiles(scanner.targetPath);
-  //
-  // await uploader.upload(argv['dry-run']);
+  const uploader = new Uploader()
+  await requester.requestSignedUrl(argv['dry-run'])
+  if (requester.data && requester.data['err'] === 0) {
+    requester.setProjectID(1)
+    const manifestFile = requester.createManifestFile(scanner.targetPath)
+    uploader.mapFiles(scanner.files);
+    uploader.zipFiles(scanner.targetPath, requester.data['result']['filename'], manifestFile);
+    await uploader.upload(argv['dry-run'], requester.data['result']['signed_url'])
+
+  }
 }

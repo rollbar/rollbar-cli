@@ -2,7 +2,7 @@
 var https = require('https');
 
 const axios = require('axios');
-const FormData = require('form-data');
+
 
 class RollbarAPI {
   constructor(accessToken) {
@@ -35,16 +35,15 @@ class RollbarAPI {
     if (resp.status === 200) {
       output.success('', resp.data.data);
     }
-    return this.processResponse(resp);
+    return this.processDeployResponse(resp);
   }
 
   async sourcemaps(request) {
 
-    //const form = this.convertRequestToForm(request);
-    const json = JSON.stringify({ version: request.version , base_url: request.baseUrl});
+    const json = JSON.stringify({ version: request.version , prefix_url: request.baseUrl});
 
     const resp = await this.axios.post(
-      '/sourcemap', json,
+      '/signed_url/sourcemaps', json,
         {
           httpsAgent: new https.Agent({
             rejectUnauthorized: false
@@ -55,31 +54,18 @@ class RollbarAPI {
           }
         },
     );
-
-    return this.processResponse(resp);
+    return this.processSourceMapResponse(resp);
   }
 
-  convertRequestToForm(request) {
-    const form = new FormData();
-
-    form.append('version', request.version);
-    form.append('minified_url', request.minified_url);
-    form.append('source_map', Buffer.from(request.source_map), { filename: 'source_map' });
-
-    if (request.sources) {
-      for (const filename of Object.keys(request.sources)) {
-        if (filename && request.sources[filename]) {
-          form.append(filename, Buffer.from(request.sources[filename]), { filename: filename });
-        }
-      }
-    }
-    return form;
+  processSourceMapResponse(resp) {
+    output.verbose('', 'response:', resp.data, resp.status, resp.statusText);
+    return resp.data;
   }
 
-  processResponse(resp) {
+  processDeployResponse(resp) {
     output.verbose('', 'response:', resp.data, resp.status, resp.statusText);
     if (resp.status === 200) {
-      return null;
+      return null
     }
     return resp.data;
   }

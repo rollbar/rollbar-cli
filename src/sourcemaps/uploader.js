@@ -1,16 +1,15 @@
 'use strict';
 
 const AdmZip = require('adm-zip');
-const RollbarAPI = require('../common/rollbar-api');
-const URL = require('url').URL;
 const path = require('path');
+const fs = require('fs')
+const axios = require('axios')
+const zipFile = new AdmZip();
 
 class Uploader {
   constructor(options) {
-    this.files = [];
-    this.rollbarAPI = new RollbarAPI(options.accessToken);
-    this.baseUrl = options.baseUrl;
-    this.version = options.codeVersion;
+     this.zippedMapFile = ''
+     this.files = []
   }
 
   mapFiles(files) {
@@ -19,19 +18,40 @@ class Uploader {
     return this;
   }
 
-  zipFiles(targetPath) {
-    const zipFile = new AdmZip();
-    const fs = require('fs');
+  zipFiles(targetPath, filename, manifest) {
 
-    for (const file of this.files) {
-      //output.status('Upload', file);
-      zipFile.addLocalFile(file.filePathName);
+    try {
+      zipFile.addLocalFile(manifest);
+    } catch (e) {
+      output.status('Error', e.message)
     }
-    const outFile = path.join(targetPath, 'output.zip');
-    fs.writeFileSync(outFile, zipFile.toBuffer());
+      for (const file of this.files) {
+        try {
+          if (file.validated) {
+            zipFile.addLocalFile(file.mappedFile);
+          }
+        } catch(e) {
+          output.status('Error', e.message)
+        }
+      }
+      try {
+        const outFile = path.join(targetPath, filename);
+        fs.writeFileSync(outFile, zipFile.toBuffer());
+
+        const fileSize = fs.statSync(outFile);
+
+        if (fileSize['size'] > 0) {
+          this.zippedMapFile = outFile
+          output.success('', 'Zipped all the source map files successfully');
+        } else {
+          output.success('', 'Zip was unsuccessful');
+        }
+      } catch(e) {
+        output.status('Error', e.message)
+      }
   }
 
-  async upload(dryRun) {
+  async upload(dryRun, signedUrl) {
     if (dryRun) {
       // TODO: Maybe more can be done here, but the important part is just to
       // return without sending. The bulk of validation is done earlier
@@ -39,62 +59,23 @@ class Uploader {
       return this.files;
     }
 
-    for (const file of this.files) {
-      output.status('Upload', file.mapPathName);
+    try {
+      const readmeStream = fs.createReadStream(this.zippedMapFile)
 
-      try {
-        if (this.skip(file)) {
-          continue;
-        }
-
-        const error = await this.rollbarAPI.sourcemaps(this.buildRequest(file));
-
-        if (error) {
-          file.errors.push({
-            error: error.message,
-            file: file
-          });
-        }
-      } catch (e) {
-        file.errors.push({
-          error: e.message,
-          file: file
-        });
+      const resp = await axios.put(signedUrl, readmeStream, {
+        headers: {
+          'Content-Type': 'application/octet-stream',
+        },
+      })
+      if (resp.status === 200) {
+        output.status('Success', 'Uploaded zip file successfully');
+      } else {
+        output.status('Error', 'Could not upload the zip file');
       }
 
-      if (!file.errors.length) {
-        output.success('', 'Upload successful');
-      }
-
-      for (const error of file.errors) {
-        output.error('Error', error.error);
-      }
+    }  catch (e) {
+      output.status('Error', e.message)
     }
-
-    return this.files;
-  }
-
-  buildRequest(file) {
-    return {
-      version: this.version,
-      minified_url: this.minifiedUrl(file.fileName),
-      source_map: file.mapData,
-      sources: file.sources
-    }
-  }
-
-  minifiedUrl(fileName) {
-    return (new URL(fileName, this.baseUrl)).toString();
-  }
-
-  skip(file) {
-    if (file.fileName && file.mapData && !file.errors.length){
-      return false;
-    }
-
-    output.warn('', 'skip: ' + file.filePathName);
-
-    return true;
   }
 }
 

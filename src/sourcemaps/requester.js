@@ -1,13 +1,16 @@
 'use strict';
 
 const RollbarAPI = require('../common/rollbar-api');
-const URL = require('url').URL;
+const path = require('path');
+const fs = require('fs');
 
 class Requester {
   constructor(options) {
+    this.data = null
     this.rollbarAPI = new RollbarAPI(options.accessToken);
     this.baseUrl = options.baseUrl;
     this.version = options.codeVersion;
+    this.projectID = 0
   }
 
   async requestSignedUrl(dryRun) {
@@ -19,17 +22,18 @@ class Requester {
     }
 
     try {
-      const error = await this.rollbarAPI.sourcemaps(this.buildRequest());
-      if (error) {
-        output.error('Error', error.error);
+      const data = await this.rollbarAPI.sourcemaps(this.buildRequest());
+
+      this.data = data
+      if (data && data['err'] === 0) {
+        output.success('', 'Requested for signed URL successfully');
       } else {
-        output.success('', 'Requested successfully');
+        output.error('Error', data.message);
       }
+
     } catch (e) {
       output.error('Error', e.message);
     }
-
-    return this.files;
   }
 
   buildRequest() {
@@ -37,6 +41,27 @@ class Requester {
       version: this.version,
       baseUrl: this.baseUrl,
     }
+  }
+
+  setProjectID(projectID) {
+    this.projectID = projectID
+  }
+
+  createManifestFile(filePath) {
+    const file = 'manifest.json'
+    const outFile = path.join(filePath, file);
+    let data = {
+      projectID: this.projectID,
+      version: this.version,
+      baseUrl: this.baseUrl,
+    };
+    let strData = JSON.stringify(data, null, 2);
+
+    fs.writeFileSync(outFile, strData, (err) => {
+      if (err) throw err;
+      console.log('Data written to file');
+    });
+    return outFile
   }
 
 }
