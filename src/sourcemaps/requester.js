@@ -22,7 +22,7 @@ class Requester {
     }
 
     try {
-      const data = await this.rollbarAPI.sourcemaps(this.buildRequest());
+      const data = await this.rollbarAPI.sigendURLsourcemaps(this.buildRequest());
 
       this.data = data
       if (data && data['err'] === 0) {

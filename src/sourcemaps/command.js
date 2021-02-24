@@ -2,6 +2,7 @@
 
 const Scanner = require('./scanner');
 const Uploader = require('./uploader');
+const SignedUrlUploader = require('./signed-url-uploader');
 const Requester = require('./requester');
 const Output = require('../common/output.js');
 
@@ -36,6 +37,12 @@ exports.builder = function (yargs) {
     type: 'boolean',
     demandOption: false
   })
+      .option('signed-url', {
+        describe: 'Zip all the source map files and upload via signed URL',
+        requiresArg: false,
+        type: 'boolean',
+        demandOption: false
+      })
 }
 
 exports.handler = async function (argv) {
@@ -51,20 +58,32 @@ exports.handler = async function (argv) {
 
   await scanner.scan();
 
-  const requester = new Requester({
-    accessToken: argv['access-token'],
-    baseUrl: argv['url-prefix'],
-    codeVersion: argv['code-version']
-  })
+  if (argv['signed-url']) {
+    const requester = new Requester({
+      accessToken: argv['access-token'],
+      baseUrl: argv['url-prefix'],
+      codeVersion: argv['code-version']
+    })
 
-  const uploader = new Uploader()
-  await requester.requestSignedUrl(argv['dry-run'])
-  if (requester.data && requester.data['err'] === 0) {
-    requester.setProjectID(1)
-    const manifestFile = requester.createManifestFile(scanner.targetPath)
+    const signedUrlUploader = new SignedUrlUploader()
+    await requester.requestSignedUrl(argv['dry-run'])
+    if (requester.data && requester.data['err'] === 0) {
+      requester.setProjectID(requester.data['result']['project_id'])
+      const manifestFile = requester.createManifestFile(scanner.targetPath)
+      signedUrlUploader.mapFiles(scanner.files);
+      signedUrlUploader.zipFiles(scanner.targetPath, requester.data['result']['filename'], manifestFile);
+      await signedUrlUploader.upload(argv['dry-run'], requester.data['result']['signed_url'])
+    }
+  } else {
+    const uploader = new Uploader({
+      accessToken: argv['access-token'],
+      baseUrl: argv['url-prefix'],
+      codeVersion: argv['code-version']
+    })
+
     uploader.mapFiles(scanner.files);
-    uploader.zipFiles(scanner.targetPath, requester.data['result']['filename'], manifestFile);
-    await uploader.upload(argv['dry-run'], requester.data['result']['signed_url'])
+
+    await uploader.upload(argv['dry-run']);
 
   }
 }

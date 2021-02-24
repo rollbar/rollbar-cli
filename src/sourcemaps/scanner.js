@@ -8,6 +8,7 @@ const BasicSourceMapConsumer = require('source-map/lib/source-map-consumer').Bas
 class Scanner {
   constructor(options) {
     this.files = [];
+    this.mappings = {};
     this.targetPath = options.targetPath;
     this.projectPath = './';
     this.sources = options.sources;
@@ -26,7 +27,7 @@ class Scanner {
       output.status('Found', file.filePathName);
 
       this.extractMapPath(file);
-      await this.validateData(file);
+      await this.loadMapData(file);
 
       for(const error of file.errors) {
         output.warn('Error', error.error);
@@ -49,7 +50,7 @@ class Scanner {
     }
   }
 
-  async validateData(file) {
+  async loadMapData(file) {
     if (file.mapPathName) {
       try {
         const filePath = path.dirname(file.filePathName);
@@ -57,7 +58,8 @@ class Scanner {
         const data = fs.readFileSync(mapPath).toString();
 
         if (data) {
-          file.map = JSON.parse(data);
+          file.mapData = data;
+          file.map = JSON.parse(file.mapData);
           file.sources = (this.sources && file.map.sources) ? await this.originalSources(file) : {};
           const errors = await this.validate(file);
           if (errors && errors.length) {
@@ -169,6 +171,7 @@ class Scanner {
       fileName: path.relative(this.targetPath, filePathName),
       sourceMappingURL: false,
       mapPathName: null,
+      mapData: null,
       validated: false,
       metadata: {},
       errors: []
