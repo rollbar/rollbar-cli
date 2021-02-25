@@ -35,7 +35,7 @@ describe('.sourcemaps()', function() {
     this.currentTest.stub.restore();
   });
 
-  it('should send well formed request', async function() {
+  it('should send well formed request for signed URL', async function() {
     const rollbarAPI = this.test.rollbarAPI;
     const stub = this.test.stub;
 
@@ -60,7 +60,7 @@ describe('.sourcemaps()', function() {
       sources: []
     };
 
-    const response = await rollbarAPI.sourcemaps(request);
+    const response = await rollbarAPI.sigendURLsourcemaps(request);
 
     expect(response).to.be.not.null;
     expect(stub.calledOnce).to.be.true;
@@ -69,6 +69,43 @@ describe('.sourcemaps()', function() {
     expect(body[0]).to.equal('/signed_url/sourcemaps');
     expect(body[1]).to.be.a('String'); // This is how Chai sees the Buffer type
     expect(body[2].headers['Content-Type']).to.have.string('application/json');
+  });
+
+  it('should send well formed request', async function() {
+    const rollbarAPI = this.test.rollbarAPI;
+    const stub = this.test.stub;
+
+    stub.resolves({
+      status: 200,
+      statusText: 'Success',
+      data: { err: 0, result: { uuid: 'd4c7acef55bf4c9ea95e4fe9428a8287'}}
+    });
+
+    const request = {
+      version: '123',
+      minified_url: 'https://example.com/foo.js',
+      source_map: '{ \
+        "version" : 3, \
+        "file": "out.js", \
+        "sourceRoot": "", \
+        "sources": ["foo.js", "bar.js"], \
+        "sourcesContent": [null, null], \
+        "names": ["src", "maps", "are", "fun"], \
+        "mappings": "A,AAAB;;ABCDE;" \
+        }',
+      sources: []
+    };
+
+    const response = await rollbarAPI.sourcemaps(request);
+
+    expect(response).to.be.null;
+    expect(stub.calledOnce).to.be.true;
+
+    const body = stub.getCall(0).args;
+    expect(body[0]).to.equal('/sourcemap');
+    expect(body[1]).to.be.a('Uint8Array'); // This is how Chai sees the Buffer type
+    expect(body[2].headers['Content-Type']).to.have.string('multipart/form-data; boundary=--------------------------');
+    expect(body[2].headers['Content-Length']).to.equal(726);
   });
 
   it('should handle error responses', async function() {

@@ -55,4 +55,20 @@ describe('Command()', function() {
     expect(stubWarn.callCount).to.equal(2);
     expect(stubSuccess.callCount).to.equal(3);
   });
+
+  it.skip('scans, loads and validates react project with signed URL', async function() {
+    this.timeout(5000);
+    const stubWarn = this.test.stubWarn;
+    const stubSuccess = this.test.stubSuccess;
+
+    const parser = yargs.command(Command).help();
+    await new Promise((resolve) => {
+      parser.parse('upload-sourcemaps ./test/fixtures/builds/react16/build --access-token 1234 --url-prefix "http://localhost:3000/" --code-version react16 -D --signed-url', (_err, _argv, output) => {
+        resolve(output);
+      })
+    });
+
+    expect(stubWarn.callCount).to.equal(2);
+    expect(stubSuccess.callCount).to.equal(3);
+  });
 });

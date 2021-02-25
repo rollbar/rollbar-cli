@@ -4,6 +4,8 @@
 
 const expect = require('chai').expect;
 const sinon = require('sinon');
+const fs = require('fs')
+const path = require('path');
 
 const Requester = require('../../src/sourcemaps/requester');
 const Scanner = require('../../src/sourcemaps/scanner');
@@ -94,4 +96,22 @@ describe('.requestSignedUrl()', function() {
 
     stub.restore();
   });
+
+  it('should create manifest file', function() {
+
+    const options = {
+      accessToken: 'abcd',
+      baseUrl: 'https://example.com',
+      codeVersion: '123',
+    };
+    const requester = new Requester(options);
+    requester.setProjectID(1)
+    const filePath = './test/fixtures/builds/react16/build'
+    requester.createManifestFile(filePath)
+
+    const outFile = path.join(filePath, 'manifest.json');
+    const fileStats = fs.statSync(outFile);
+    expect(fileStats['size']).to.not.equal(0);
+  });
 });
+

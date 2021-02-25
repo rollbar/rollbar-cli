@@ -50,16 +50,15 @@ class Requester {
   createManifestFile(filePath) {
     const file = 'manifest.json'
     const outFile = path.join(filePath, file);
-    let data = {
+    const data = {
       projectID: this.projectID,
       version: this.version,
       baseUrl: this.baseUrl,
     };
-    let strData = JSON.stringify(data, null, 2);
+    const strData = JSON.stringify(data, null, 2);
 
     fs.writeFileSync(outFile, strData, (err) => {
       if (err) throw err;
-      console.log('Data written to file');
     });
     return outFile
   }

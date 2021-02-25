@@ -40,8 +40,8 @@ describe('.zipFiles()', function() {
     signedUrlUploader.mapFiles(files);
     signedUrlUploader.zipFiles(scanner.targetPath, 'output.zip');
 
-    const fileSize = fs.statSync(signedUrlUploader.zippedMapFile);
-    expect(fileSize['size']).to.not.equal(0);
+    const fileStats = fs.statSync(signedUrlUploader.zippedMapFile);
+    expect(fileStats['size']).to.not.equal(0);
 
   });
 });
