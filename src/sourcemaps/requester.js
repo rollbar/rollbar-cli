@@ -62,7 +62,6 @@ class Requester {
     });
     return outFile
   }
-
 }
 
 module.exports = Requester;

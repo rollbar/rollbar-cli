@@ -92,7 +92,7 @@ class RollbarAPI {
   processResponse(resp) {
     output.verbose('', 'response:', resp.data, resp.status, resp.statusText);
     if (resp.status === 200) {
-      return null
+      return null;
     }
     return resp.data;
   }

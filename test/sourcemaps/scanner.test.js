@@ -24,6 +24,7 @@ describe('Scanner()', function() {
     expect(scanner.sources).to.equal(options.sources);
     expect(scanner.projectPath).to.equal('./');
     expect(scanner.files).to.be.an('array').that.is.empty;
+    expect(scanner.mappings).to.be.an('object').that.is.empty;
   });
 });
 

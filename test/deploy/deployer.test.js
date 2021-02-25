@@ -1,4 +1,4 @@
-  /* globals describe */
+/* globals describe */
 /* globals it */
 /* globals beforeEach */
 
