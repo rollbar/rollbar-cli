@@ -74,7 +74,7 @@ class Uploader {
   }
 
   skip(file) {
-    if (file.fileName && file.mapData && !file.errors.length) {
+    if (file.fileName && file.mapData && !file.errors.length){
       return false;
     }
 
