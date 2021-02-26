@@ -41,9 +41,9 @@ class RollbarAPI {
 
     const resp = await this.axios.post(
       '/signed_url/sourcemaps', json,
-      {headers: {
-          // axios needs some help with headers for form data.
-          'Content-Type': 'application/json'
+      { headers: {
+        // axios needs some help with headers for form data.
+        'Content-Type': 'application/json'
       }},
     );
     return this.processSignedURLResponse(resp);
@@ -56,10 +56,10 @@ class RollbarAPI {
     const resp = await this.axios.post(
       '/sourcemap',
       form.getBuffer(), // use buffer to prevent unwanted string escaping.
-      {headers: {
-          // axios needs some help with headers for form data.
-          'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
-          'Content-Length': form.getLengthSync()
+       { headers: {
+         // axios needs some help with headers for form data.
+         'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
+         'Content-Length': form.getLengthSync()
       }}
     );
 
