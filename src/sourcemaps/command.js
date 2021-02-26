@@ -37,12 +37,12 @@ exports.builder = function (yargs) {
     type: 'boolean',
     demandOption: false
   })
-      .option('signed-url', {
-        describe: 'Zip all the source map files and upload via signed URL',
-        requiresArg: false,
-        type: 'boolean',
-        demandOption: false
-      })
+  .option('signed-url', {
+    describe: 'Zip all the source map files and upload via signed URL',
+    requiresArg: false,
+    type: 'boolean',
+    demandOption: false
+  })
 }
 
 exports.handler = async function (argv) {
