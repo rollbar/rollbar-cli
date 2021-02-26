@@ -4,12 +4,12 @@ const RollbarAPI = require('../common/rollbar-api');
 const URL = require('url').URL;
 
 class Uploader {
-    constructor(options) {
-        this.files = [];
-        this.rollbarAPI = new RollbarAPI(options.accessToken);
-        this.baseUrl = options.baseUrl;
-        this.version = options.codeVersion;
-    }
+  constructor(options) {
+      this.files = [];
+      this.rollbarAPI = new RollbarAPI(options.accessToken);
+      this.baseUrl = options.baseUrl;
+      this.version = options.codeVersion;
+  }
 
     mapFiles(files) {
         this.files = files;
