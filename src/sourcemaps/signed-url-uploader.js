@@ -1,15 +1,16 @@
 'use strict';
 
 const AdmZip = require('adm-zip');
-const path = require('path');
-const fs = require('fs')
-const axios = require('axios')
+const axios = require('axios');
 const zipFile = new AdmZip();
 
 class SignedUrlUploader {
-  constructor() {
-     this.zippedMapFile = ''
-     this.files = []
+  constructor(requester) {
+     this.zippedMapFile = '';
+     this.files = [];
+     this.requester = requester;
+     this.zipBuffer = Buffer;
+
   }
 
   mapFiles(files) {
@@ -18,12 +19,12 @@ class SignedUrlUploader {
     return this;
   }
 
-  zipFiles(targetPath, filename, manifest) {
+  zipFiles() {
 
     try {
-      zipFile.addLocalFile(manifest);
+      zipFile.addFile('manifest.json', this.requester.manifestData);
     } catch (e) {
-      output.status('Error', e.message)
+      output.status('Error', e.message);
     }
       for (const file of this.files) {
         try {
@@ -31,27 +32,22 @@ class SignedUrlUploader {
             zipFile.addLocalFile(file.mappedFile);
           }
         } catch(e) {
-          output.status('Error', e.message)
+          output.status('Error', e.message);
         }
       }
       try {
-        const outFile = path.join(targetPath, filename);
-        fs.writeFileSync(outFile, zipFile.toBuffer());
-
-        const fileSize = fs.statSync(outFile);
-
-        if (fileSize['size'] > 0) {
-          this.zippedMapFile = outFile
+        this.zipBuffer = zipFile.toBuffer();
+        if (this.zipBuffer.length != 0) {
           output.success('', 'Zipped all the source map files successfully');
         } else {
-          output.success('', 'Zip was unsuccessful');
+          output.error('', 'Zip was unsuccessful');
         }
       } catch(e) {
-        output.status('Error', e.message)
+        output.status('Error', e.message);
       }
   }
 
-  async upload(dryRun, signedUrl) {
+  async upload(dryRun, files, signedUrl) {
     if (dryRun) {
       // TODO: Maybe more can be done here, but the important part is just to
       // return without sending. The bulk of validation is done earlier
@@ -60,9 +56,10 @@ class SignedUrlUploader {
     }
 
     try {
-      const readmeStream = fs.createReadStream(this.zippedMapFile)
+      this.mapFiles(files);
+      this.zipFiles();
 
-      const resp = await axios.put(signedUrl, readmeStream, {
+      const resp = await axios.put(signedUrl, this.zipBuffer, {
         headers: {
           'Content-Type': 'application/octet-stream',
         },
@@ -74,7 +71,7 @@ class SignedUrlUploader {
       }
 
     }  catch (e) {
-      output.status('Error', e.message)
+      output.status('Error', e.message);
     }
   }
 }

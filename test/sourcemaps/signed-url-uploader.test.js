@@ -38,10 +38,9 @@ describe('.zipFiles()', function() {
     const signedUrlUploader = new SignedUrlUploader();
 
     signedUrlUploader.mapFiles(files);
-    signedUrlUploader.zipFiles(scanner.targetPath, 'output.zip');
+    signedUrlUploader.zipFiles();
 
-    const fileStats = fs.statSync(signedUrlUploader.zippedMapFile);
-    expect(fileStats['size']).to.not.equal(0);
+    expect(signedUrlUploader.zipBuffer.length).to.equal(22);
 
   });
 });
@@ -64,17 +63,13 @@ describe('.upload()', function() {
 
     const signedUrlUploader = new SignedUrlUploader();
 
-    signedUrlUploader.mapFiles(files);
-
-    signedUrlUploader.zipFiles(scanner.targetPath, 'output.zip');
-
     const stub = sinon.stub(axios, 'put');
     stub.resolves({
       status: 200,
       statusText: 'Success',
     });
 
-    await signedUrlUploader.upload();
+    await signedUrlUploader.upload(false, files);
     expect(stub.callCount).to.equal(1);
 
   });

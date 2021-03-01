@@ -1,8 +1,6 @@
 'use strict';
 
 const RollbarAPI = require('../common/rollbar-api');
-const path = require('path');
-const fs = require('fs');
 
 class Requester {
   constructor(options) {
@@ -11,10 +9,12 @@ class Requester {
     this.baseUrl = options.baseUrl;
     this.version = options.codeVersion;
     this.projectID = 0
+    this.dryRun = options.dryRun
+    this.manifestData = ''
   }
 
-  async requestSignedUrl(dryRun) {
-    if (dryRun) {
+  async requestSignedUrl() {
+    if (this.dryRun) {
       // TODO: Maybe more can be done here, but the important part is just to
       // return without sending. The bulk of validation is done earlier
       // in the scanning phase.
@@ -43,24 +43,19 @@ class Requester {
     }
   }
 
-  setProjectID(projectID) {
-    this.projectID = projectID
+  setProjectID() {
+    this.projectID = this.data['result']['project_id']
   }
 
-  createManifestFile(filePath) {
-    const file = 'manifest.json'
-    const outFile = path.join(filePath, file);
+  createManifestData() {
     const data = {
       projectID: this.projectID,
       version: this.version,
       baseUrl: this.baseUrl,
     };
-    const strData = JSON.stringify(data, null, 2);
 
-    fs.writeFileSync(outFile, strData, (err) => {
-      if (err) throw err;
-    });
-    return outFile
+    const strData = JSON.stringify(data, null, 2);
+    this.manifestData = strData
   }
 }
 

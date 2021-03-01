@@ -105,13 +105,14 @@ describe('.requestSignedUrl()', function() {
       codeVersion: '123',
     };
     const requester = new Requester(options);
-    requester.setProjectID(1)
-    const filePath = './test/fixtures/builds/react16/build'
-    requester.createManifestFile(filePath)
+    const data = { 'result': {'project_id': 1}}
+    requester.data = data
+    requester.setProjectID()
+    requester.createManifestData()
 
-    const outFile = path.join(filePath, 'manifest.json');
-    const fileStats = fs.statSync(outFile);
-    expect(fileStats['size']).to.not.equal(0);
+    expect(requester.manifestData).to.equal('{\n  "projectID": 1,\n  "version": "123",\n  "baseUrl": "https://example.com"\n}');
+
+
   });
 });
 

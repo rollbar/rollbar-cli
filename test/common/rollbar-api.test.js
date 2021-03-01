@@ -67,8 +67,7 @@ describe('.sourcemaps()', function() {
 
     const body = stub.getCall(0).args;
     expect(body[0]).to.equal('/signed_url/sourcemaps');
-    expect(body[1]).to.be.a('String'); // This is how Chai sees the Buffer type
-    expect(body[2].headers['Content-Type']).to.have.string('application/json');
+    expect(body[1]).to.be.a('Object');
   });
 
   it('should send well formed request', async function() {

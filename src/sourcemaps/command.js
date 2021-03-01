@@ -62,17 +62,16 @@ exports.handler = async function (argv) {
     const requester = new Requester({
       accessToken: argv['access-token'],
       baseUrl: argv['url-prefix'],
-      codeVersion: argv['code-version']
+      codeVersion: argv['code-version'],
+      dryRun: argv['dry-run']
     })
 
-    const signedUrlUploader = new SignedUrlUploader()
-    await requester.requestSignedUrl(argv['dry-run'])
+    await requester.requestSignedUrl()
+    const signedUrlUploader = new SignedUrlUploader(requester)
     if (requester.data && requester.data['err'] === 0) {
-      requester.setProjectID(requester.data['result']['project_id'])
-      const manifestFile = requester.createManifestFile(scanner.targetPath)
-      signedUrlUploader.mapFiles(scanner.files);
-      signedUrlUploader.zipFiles(scanner.targetPath, requester.data['result']['filename'], manifestFile);
-      await signedUrlUploader.upload(argv['dry-run'], requester.data['result']['signed_url'])
+      requester.setProjectID()
+      requester.createManifestData()
+      await signedUrlUploader.upload(argv['dry-run'], scanner.files, requester.data['result']['signed_url'])
     }
   } else {
     const uploader = new Uploader({
@@ -84,6 +83,5 @@ exports.handler = async function (argv) {
     uploader.mapFiles(scanner.files);
 
     await uploader.upload(argv['dry-run']);
-
   }
 }
