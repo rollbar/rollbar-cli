@@ -4,8 +4,6 @@
 
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const fs = require('fs')
-const path = require('path');
 
 const Requester = require('../../src/sourcemaps/requester');
 const Scanner = require('../../src/sourcemaps/scanner');
@@ -97,7 +95,7 @@ describe('.requestSignedUrl()', function() {
     stub.restore();
   });
 
-  it('should create manifest file', function() {
+  it('should create manifest data', function() {
 
     const options = {
       accessToken: 'abcd',
@@ -105,14 +103,12 @@ describe('.requestSignedUrl()', function() {
       codeVersion: '123',
     };
     const requester = new Requester(options);
-    const data = { 'result': {'project_id': 1}}
-    requester.data = data
-    requester.setProjectID()
-    requester.createManifestData()
+    const data = { 'result': {'project_id': 1}};
+    requester.data = data;
+    requester.setProjectID();
+    requester.createManifestData();
 
     expect(requester.manifestData).to.equal('{\n  "projectID": 1,\n  "version": "123",\n  "baseUrl": "https://example.com"\n}');
-
-
   });
 });
 

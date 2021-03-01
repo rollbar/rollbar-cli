@@ -64,21 +64,21 @@ exports.handler = async function (argv) {
       baseUrl: argv['url-prefix'],
       codeVersion: argv['code-version'],
       dryRun: argv['dry-run']
-    })
+    });
 
-    await requester.requestSignedUrl()
-    const signedUrlUploader = new SignedUrlUploader(requester)
+    await requester.requestSignedUrl();
+    const signedUrlUploader = new SignedUrlUploader(requester);
     if (requester.data && requester.data['err'] === 0) {
-      requester.setProjectID()
-      requester.createManifestData()
-      await signedUrlUploader.upload(argv['dry-run'], scanner.files, requester.data['result']['signed_url'])
+      requester.setProjectID();
+      requester.createManifestData();
+      await signedUrlUploader.upload(argv['dry-run'], scanner.files, requester.data['result']['signed_url']);
     }
   } else {
     const uploader = new Uploader({
       accessToken: argv['access-token'],
       baseUrl: argv['url-prefix'],
       codeVersion: argv['code-version']
-    })
+    });
 
     uploader.mapFiles(scanner.files);
 

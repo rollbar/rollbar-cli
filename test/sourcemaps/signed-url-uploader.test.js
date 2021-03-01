@@ -4,7 +4,6 @@
 
 const expect = require('chai').expect;
 const sinon = require('sinon');
-const fs = require('fs')
 const axios = require('axios')
 
 const SignedUrlUploader = require('../../src/sourcemaps/signed-url-uploader');
@@ -71,6 +70,5 @@ describe('.upload()', function() {
 
     await signedUrlUploader.upload(false, files);
     expect(stub.callCount).to.equal(1);
-
   });
 });

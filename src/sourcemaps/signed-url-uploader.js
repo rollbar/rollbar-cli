@@ -63,14 +63,14 @@ class SignedUrlUploader {
         headers: {
           'Content-Type': 'application/octet-stream',
         },
-      })
+      });
       if (resp.status === 200) {
         output.status('Success', 'Uploaded zip file successfully');
       } else {
         output.status('Error', 'Could not upload the zip file');
       }
 
-    }  catch (e) {
+    } catch (e) {
       output.status('Error', e.message);
     }
   }
