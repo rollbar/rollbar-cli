@@ -54,9 +54,8 @@ and it must exactly match the URLs in the error stack frames. See `minified_url`
 error payload, which is usually set in the config options for Rollbar.js.
 See [Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
 
-`--signed-url`: This is the optional parameter. When specified, all source map files 
-are compressed and uploaded as one zip file via signed url directly from the user's 
-environment.
+`--signed-url`: This is an optional parameter. When specified, all source map files 
+are compressed and uploaded as one zip file via signed url directly.
 
 Example:
 ```
