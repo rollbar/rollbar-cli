@@ -31,6 +31,8 @@ Options:
   --url-prefix    Base part of the stack trace URLs          [string] [required]
   --code-version  Code version string must match value in the Rollbar item
                                                              [string] [required]
+  --signed-url    Zip all the source map files and upload via signed URL
+                                                                       [boolean]
   -D, --dry-run   Scan and validate source maps without uploading      [boolean]
 ```
 

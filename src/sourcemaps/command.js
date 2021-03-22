@@ -30,15 +30,15 @@ exports.builder = function (yargs) {
     type: 'string',
     demandOption: true
   })
-  .option('D', {
-    alias: 'dry-run',
-    describe: 'Scan and validate source maps without uploading',
+  .option('signed-url', {
+    describe: 'Zip all the source map files and upload via signed URL',
     requiresArg: false,
     type: 'boolean',
     demandOption: false
   })
-  .option('signed-url', {
-    describe: 'Zip all the source map files and upload via signed URL',
+  .option('D', {
+    alias: 'dry-run',
+    describe: 'Scan and validate source maps without uploading',
     requiresArg: false,
     type: 'boolean',
     demandOption: false
