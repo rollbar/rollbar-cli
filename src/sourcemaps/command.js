@@ -31,7 +31,7 @@ exports.builder = function (yargs) {
     demandOption: true
   })
   .option('next', {
-    describe: 'Next version. Zip all the source map files and upload as one file via signed URL',
+    describe: 'Next version. Zip all the source map files and upload as one file',
     requiresArg: false,
     type: 'boolean',
     demandOption: false

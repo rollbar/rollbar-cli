@@ -32,7 +32,7 @@ Options:
   --code-version  Code version string must match value in the Rollbar item
                                                              [string] [required]
   --next          Next version. Zip all the source map files and upload as one
-                  file via signed URL                                  [boolean]
+                  file                                                 [boolean]
   -D, --dry-run   Scan and validate source maps without uploading      [boolean]
 ```
 
