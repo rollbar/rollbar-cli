@@ -55,7 +55,7 @@ error payload, which is usually set in the config options for Rollbar.js.
 See [Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
 
 `--next`: This is an optional parameter triggering next version. When specified, all source map files 
-are compressed and uploaded as one zip file via signed url directly.
+are compressed and uploaded as one zip file directly.
 
 Example:
 ```
