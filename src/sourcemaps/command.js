@@ -30,8 +30,8 @@ exports.builder = function (yargs) {
     type: 'string',
     demandOption: true
   })
-  .option('signed-url', {
-    describe: 'Zip all the source map files and upload via signed URL',
+  .option('next', {
+    describe: 'Next version. Zip all the source map files and upload as one file via signed URL',
     requiresArg: false,
     type: 'boolean',
     demandOption: false
@@ -58,7 +58,7 @@ exports.handler = async function (argv) {
 
   await scanner.scan();
 
-  if (argv['signed-url']) {
+  if (argv['next']) {
     const requester = new Requester({
       accessToken: argv['access-token'],
       baseUrl: argv['url-prefix'],

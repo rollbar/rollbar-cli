@@ -39,7 +39,7 @@ class RollbarAPI {
   async sigendURLsourcemaps(request) {
 
     const resp = await this.axios.post(
-      '/signed_url/sourcemaps',  { version: request.version , prefix_url: request.baseUrl}
+      '/signed_url/sourcemap_bundle',  { version: request.version , prefix_url: request.baseUrl}
     );
     return this.processSignedURLResponse(resp);
   }

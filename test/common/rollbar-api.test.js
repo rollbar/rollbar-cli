@@ -66,7 +66,7 @@ describe('.sourcemaps()', function() {
     expect(stub.calledOnce).to.be.true;
 
     const body = stub.getCall(0).args;
-    expect(body[0]).to.equal('/signed_url/sourcemaps');
+    expect(body[0]).to.equal('/signed_url/sourcemap_bundle');
     expect(body[1]).to.be.a('Object');
   });
 
