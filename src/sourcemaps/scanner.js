@@ -43,6 +43,8 @@ class Scanner {
       output.status('', mapPath);
       file.mapPathName = mapPath;
       file.sourceMappingURL = true;
+      file.mappedFile = path.join(this.targetPath, mapPath);
+
     } else {
       output.warn('', 'map not found');
     }

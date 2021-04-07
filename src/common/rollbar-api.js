@@ -36,6 +36,14 @@ class RollbarAPI {
     return this.processResponse(resp);
   }
 
+  async sigendURLsourcemaps(request) {
+
+    const resp = await this.axios.post(
+      '/signed_url/sourcemap_bundle',  { version: request.version , prefix_url: request.baseUrl}
+    );
+    return this.processSignedURLResponse(resp);
+  }
+
   async sourcemaps(request) {
     output.verbose('', 'minified_url: ' + request.minified_url);
 
@@ -68,6 +76,11 @@ class RollbarAPI {
       }
     }
     return form;
+  }
+
+  processSignedURLResponse(resp) {
+    output.verbose('', 'response:', resp.data, resp.status, resp.statusText);
+    return resp.data;
   }
 
   processResponse(resp) {

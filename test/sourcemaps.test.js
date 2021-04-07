@@ -28,4 +28,18 @@ describe('rollbar-cli upload-sourcemaps', function() {
       expect(lines[i]).to.have.string('[Found ]');
     }
   });
+
+  it('uploads react project via signed URL', function() {
+    this.timeout(5000);
+
+    const stdout = execSync('./bin/rollbar upload-sourcemaps ./test/fixtures/builds/react16/build --access-token 1234 --url-prefix "http://localhost:3000/" --code-version react16 -D --signed-url');
+
+    const lines = stdout.toString().split('\n');
+
+    expect(lines.length).to.equal(14);
+
+    for(let i; i < lines.length; i+=2) {
+      expect(lines[i]).to.have.string('[Found ]');
+    }
+  });
 });

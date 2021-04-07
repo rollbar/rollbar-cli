@@ -31,6 +31,8 @@ Options:
   --url-prefix    Base part of the stack trace URLs          [string] [required]
   --code-version  Code version string must match value in the Rollbar item
                                                              [string] [required]
+  --next          Next version. Zip all the source map files and upload as one
+                  file                                                 [boolean]
   -D, --dry-run   Scan and validate source maps without uploading      [boolean]
 ```
 
@@ -52,9 +54,16 @@ and it must exactly match the URLs in the error stack frames. See `minified_url`
 error payload, which is usually set in the config options for Rollbar.js.
 See [Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
 
+`--next`: This is an optional parameter triggering next version. When specified, all source map files 
+are compressed and uploaded as one zip file directly.
+
 Example:
 ```
 rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http://example.com/' --code-version 123.456
+```
+or
+```
+rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http://example.com/' --code-version 123.456 --signed-url
 ```
 
 ### notify-deploy

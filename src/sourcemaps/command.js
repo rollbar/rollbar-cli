@@ -2,6 +2,8 @@
 
 const Scanner = require('./scanner');
 const Uploader = require('./uploader');
+const SignedUrlUploader = require('./signed-url-uploader');
+const Requester = require('./requester');
 const Output = require('../common/output.js');
 
 exports.command = 'upload-sourcemaps <path> [options]'
@@ -28,6 +30,12 @@ exports.builder = function (yargs) {
     type: 'string',
     demandOption: true
   })
+  .option('next', {
+    describe: 'Next version. Zip all the source map files and upload as one file',
+    requiresArg: false,
+    type: 'boolean',
+    demandOption: false
+  })
   .option('D', {
     alias: 'dry-run',
     describe: 'Scan and validate source maps without uploading',
@@ -50,13 +58,30 @@ exports.handler = async function (argv) {
 
   await scanner.scan();
 
-  const uploader = new Uploader({
-    accessToken: argv['access-token'],
-    baseUrl: argv['url-prefix'],
-    codeVersion: argv['code-version']
-  })
+  if (argv['next']) {
+    const requester = new Requester({
+      accessToken: argv['access-token'],
+      baseUrl: argv['url-prefix'],
+      codeVersion: argv['code-version'],
+      dryRun: argv['dry-run']
+    });
 
-  uploader.mapFiles(scanner.files);
+    await requester.requestSignedUrl();
+    const signedUrlUploader = new SignedUrlUploader(requester);
+    if (requester.data && requester.data['err'] === 0) {
+      requester.setProjectID();
+      requester.createManifestData();
+      await signedUrlUploader.upload(argv['dry-run'], scanner.files, requester.data['result']['signed_url']);
+    }
+  } else {
+    const uploader = new Uploader({
+      accessToken: argv['access-token'],
+      baseUrl: argv['url-prefix'],
+      codeVersion: argv['code-version']
+    });
 
-  await uploader.upload(argv['dry-run']);
+    uploader.mapFiles(scanner.files);
+
+    await uploader.upload(argv['dry-run']);
+  }
 }

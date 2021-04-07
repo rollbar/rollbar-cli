@@ -35,6 +35,41 @@ describe('.sourcemaps()', function() {
     this.currentTest.stub.restore();
   });
 
+  it('should send well formed request for signed URL', async function() {
+    const rollbarAPI = this.test.rollbarAPI;
+    const stub = this.test.stub;
+
+    stub.resolves({
+      status: 200,
+      statusText: 'Success',
+      data: { err: 0, result: { uuid: 'd4c7acef55bf4c9ea95e4fe9428a8287'}}
+    });
+
+    const request = {
+      version: '123',
+      prefix_url: 'https://example.com/',
+      source_map: '{ \
+        "version" : 3, \
+        "file": "out.js", \
+        "sourceRoot": "", \
+        "sources": ["foo.js", "bar.js"], \
+        "sourcesContent": [null, null], \
+        "names": ["src", "maps", "are", "fun"], \
+        "mappings": "A,AAAB;;ABCDE;" \
+        }',
+      sources: []
+    };
+
+    const response = await rollbarAPI.sigendURLsourcemaps(request);
+
+    expect(response).to.be.not.null;
+    expect(stub.calledOnce).to.be.true;
+
+    const body = stub.getCall(0).args;
+    expect(body[0]).to.equal('/signed_url/sourcemap_bundle');
+    expect(body[1]).to.be.a('Object');
+  });
+
   it('should send well formed request', async function() {
     const rollbarAPI = this.test.rollbarAPI;
     const stub = this.test.stub;
