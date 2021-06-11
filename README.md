@@ -1,9 +1,9 @@
 # rollbar-cli
 
-![build](https://github.com/rollbar/rollbar-cli/workflows/Node.js%20CI/badge.svg)
-
 The Rollbar CLI provides easy command line access to Rollbar's API features,
 starting with source map uploads and notifying deploys.
+
+![build](https://github.com/rollbar/rollbar-cli/workflows/Node.js%20CI/badge.svg)
 
 ## Install
 
@@ -54,7 +54,7 @@ and it must exactly match the URLs in the error stack frames. See `minified_url`
 error payload, which is usually set in the config options for Rollbar.js.
 See [Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
 
-`--next`: This is an optional parameter triggering next version. When specified, all source map files 
+`--next`: This is an optional parameter triggering next version. When specified, all source map files
 are compressed and uploaded as one zip file directly.
 
 Example:
