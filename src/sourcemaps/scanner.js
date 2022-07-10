@@ -37,17 +37,27 @@ class Scanner {
   }
 
   extractMapPath(file) {
+    // check sourceMappingURL to see if a map is defined
     const mapPath = this.parseMapPath(file.filePathName);
-
-    if(mapPath) {
+    if (mapPath) {
       output.status('', mapPath);
       file.mapPathName = mapPath;
       file.sourceMappingURL = true;
       file.mappedFile = path.join(this.targetPath, mapPath);
-
-    } else {
-      output.warn('', 'map not found');
+      return;
     }
+
+    // check to see if the file exists locally
+    const localPath = this.localMapPath(file.filePathName);
+    if (localPath) {
+      output.status('', localPath);
+      file.mapPathName = localPath;
+      file.sourceMappingURL = false;
+      file.mappedFile = path.join(this.targetPath, localPath);
+      return;
+    }
+
+    output.warn('', 'map not found');
   }
 
   async loadMapData(file) {
@@ -189,6 +199,12 @@ class Scanner {
         return matched[1];
       }
     }
+  }
+
+  localMapPath(sourcePath) {
+    const mapPath = sourcePath + '.map';
+    const stat = fs.statSync(mapPath, { throwIfNoEntry: false });
+    return stat && stat.isFile() ? path.basename(mapPath) : undefined;
   }
 }
 
