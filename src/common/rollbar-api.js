@@ -37,11 +37,8 @@ class RollbarAPI {
   }
 
   async createProject(request) {
-    const resp = await this.axios.patch('/projects', request);
+    const resp = await this.axios.post('/projects', request);
 
-    if (resp.status === 200) {
-      output.success('', resp.data.data);
-    }
     return this.processResponse(resp);
   }
 

@@ -29,5 +29,3 @@ function cli() {
 
 module.exports = cli;
 
-// TODO remove
-//cli();
