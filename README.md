@@ -104,6 +104,30 @@ Output on success:
          Deploy successful
 ```
 
+### create-project
+Create a new Rollbar project.
+
+```
+rollbar-cli create-project [options]
+
+Create a new Rollbar project
+
+Options:
+  --version           Show version number                              [boolean]
+  -v, --verbose       Verbose status output                            [boolean]
+  -q, --quiet         Silent status output                             [boolean]
+  --help              Show help                                        [boolean]
+  --access-token      Use an Account Access Token with 'write' scope
+                                                             [string] [required]
+  --name              Name of the project. Must start with a letter; can contain letters, numbers, spaces, underscores, hyphens, periods, and commas. Max length 32 characters.
+                                                             [string] [required]
+```
+
+Example:
+```
+rollbar-cli create-project --access-token 1234 --name TestProject
+```
+
 ## Release History & Changelog
 
 See our [Releases](https://github.com/rollbar/rollbar-cli/releases) page for a list of all releases, including changes.

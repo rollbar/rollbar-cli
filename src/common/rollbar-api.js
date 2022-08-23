@@ -36,6 +36,12 @@ class RollbarAPI {
     return this.processResponse(resp);
   }
 
+  async createProject(request) {
+    const resp = await this.axios.post('/projects', request);
+
+    return this.processResponse(resp);
+  }
+
   async sigendURLsourcemaps(request) {
 
     const resp = await this.axios.post(

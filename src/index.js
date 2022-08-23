@@ -20,6 +20,7 @@ function cli() {
     })
     .command(require('./sourcemaps/command'))
     .command(require('./deploy/command'))
+    .command(require('./project/command'))
       .help()
       .argv
 
@@ -27,3 +28,4 @@ function cli() {
 }
 
 module.exports = cli;
+
