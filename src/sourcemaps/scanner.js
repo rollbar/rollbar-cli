@@ -43,9 +43,7 @@ class Scanner {
       output.status('', mapPath);
       file.mapPathName = mapPath;
       file.sourceMappingURL = true;
-      // Resolve sourcemap path: project-relative if contains '/', otherwise JS file-relative
-      const basePath = mapPath.includes('/') ? this.projectPath : path.dirname(file.filePathName);
-      file.mappedFile = path.resolve(basePath, mapPath);
+      file.mappedFile = path.join(this.targetPath, mapPath);
 
     } else {
       output.warn('', 'map not found');
