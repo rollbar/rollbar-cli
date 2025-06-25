@@ -29,9 +29,13 @@ class SignedUrlUploader {
       for (const file of this.files) {
         try {
           if (file.validated) {
+            // Original Code
+            // zipFile.addLocalFile(file.mappedFile);
+            output.status('Info', 'Attempting to add local file: ' + file.mappedFile);
             zipFile.addLocalFile(file.mappedFile);
-          }
+          } 
         } catch(e) {
+          output.status('Info','Failed adding local file to ZIP');
           output.status('Error', e.message);
         }
       }
