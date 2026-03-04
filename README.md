@@ -5,6 +5,14 @@ starting with source map uploads and notifying deploys.
 
 ![build](https://github.com/rollbar/rollbar-cli/workflows/Node.js%20CI/badge.svg)
 
+Note: The official Rollbar CLI supports source map uploads and deployments, but it does not cover the full set of API-driven workflows some teams want. If you are looking for a CLI that wraps the Rollbar REST API, check out these community-maintained projects:
+<ull>
+  <li><a href="https://github.com/davebarnwell/rollbar-cli">https://github.com/davebarnwell/rollbar-cli</a></li>
+  <li><a href="https://github.com/delexw/rollbar-cli">https://github.com/delexw/rollbar-cli</a></li>
+</ul>
+<br />
+These tools are community-maintained (not officially supported by Rollbar). We are linking them because they are actively maintained and have been helpful for customers.
+
 ## Install
 
 ```
