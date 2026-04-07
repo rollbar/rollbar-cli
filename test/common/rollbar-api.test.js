@@ -285,3 +285,40 @@ describe('.deploy() with deployId', function() {
   });
 });
 
+describe('RollbarAPI error handling (catch coverage)', function() {
+  beforeEach(function() {
+    const accessToken = 'abcd';
+    this.rollbarAPI = new RollbarAPI(accessToken);
+    global.output = new Output({verbose: false});
+  });
+
+  afterEach(function() {
+    global.output = null;
+  });
+
+  it('should handle axios throwing in deploy()', async function() {
+    // Force axios.patch to reject
+    const stub = sinon.stub(this.rollbarAPI.axios, 'patch').rejects(new Error('Network error'));
+    const response = await this.rollbarAPI.deploy({}, '123');
+    expect(response).to.be.a('object');
+    expect(response.statusText).to.equal('Axios Error');
+    stub.restore();
+  });
+
+  it('should handle axios throwing in sigendURLsourcemaps()', async function() {
+    const stub = sinon.stub(this.rollbarAPI.axios, 'post').rejects(new Error('Network error'));
+    const response = await this.rollbarAPI.sigendURLsourcemaps({ version: '1', baseUrl: 'https://example.com/' });
+    expect(response).to.be.a('object');
+    expect(response.statusText).to.equal('Axios Error');
+    stub.restore();
+  });
+
+  it('should handle axios throwing in sourcemaps()', async function() {
+    const stub = sinon.stub(this.rollbarAPI.axios, 'post').rejects(new Error('Network error'));
+    const response = await this.rollbarAPI.sourcemaps({ version: '1', minified_url: 'https://example.com/', source_map: 'abc' });
+    expect(response).to.be.a('object');
+    expect(response.statusText).to.equal('Axios Error');
+    stub.restore();
+  });
+});
+
