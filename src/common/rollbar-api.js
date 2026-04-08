@@ -1,5 +1,18 @@
 'use strict';
 
+// Helper to normalize axios error/response for consistent error handling
+function normalizeAxiosError(resp) {
+  if (!resp) return { statusText: 'Axios Error', message: 'Unknown error' };
+  if (resp.status === 200) return null;
+  if (typeof resp.data === 'string') {
+    return { statusText: resp.statusText || 'Axios Error', message: resp.data };
+  }
+  if (typeof resp.data === 'object' && resp.data !== null) {
+    return Object.assign({}, resp.data, { statusText: resp.statusText || 'Axios Error' });
+  }
+  return { statusText: resp.statusText || 'Axios Error', message: String(resp.data) };
+}
+
 const axios = require('axios');
 const FormData = require('form-data');
 
@@ -21,44 +34,57 @@ class RollbarAPI {
 
   async deploy(request, deployId) {
     let resp;
-    if(deployId) {
-      output.verbose('', 'Update to an existing deploy with deploy_id: ' + deployId);
-      resp = await this.axios.patch('/deploy/' + deployId, request);
-    } else {
-      output.verbose('','deploy_id not present so likely a new deploy');
-      resp = await this.axios.post('/deploy', request);
-    }
+    try {
+      if(deployId) {
+        output.verbose('', 'Update to an existing deploy with deploy_id: ' + deployId);
+        resp = await this.axios.patch('/deploy/' + deployId, request);
+      } else {
+        output.verbose('','deploy_id not present so likely a new deploy');
+        resp = await this.axios.post('/deploy', request);
+      }
 
-    // Output deploy-id
-    if (resp.status === 200) {
-      output.success('', resp.data.data);
+      // Output deploy-id
+      if (resp.status === 200) {
+        output.success('', resp.data.data);
+      }
+      return this.processResponse(resp);
+    } catch (error) {
+      output.verbose('', 'axios threw error:', error);
+      return this.processResponse(error.response || { data: error.message, status: error.status || 500, statusText: error.statusText || 'Axios Error' });
     }
-    return this.processResponse(resp);
   }
 
   async sigendURLsourcemaps(request) {
-
-    const resp = await this.axios.post(
-      '/signed_url/sourcemap_bundle',  { version: request.version , prefix_url: request.baseUrl}
-    );
-    return this.processSignedURLResponse(resp);
+    try {
+      const resp = await this.axios.post(
+        '/signed_url/sourcemap_bundle',  { version: request.version , prefix_url: request.baseUrl}
+      );
+      return this.processSignedURLResponse(resp);
+    } catch (error) {
+      output.verbose('', 'axios threw error:', error);
+      return this.processSignedURLResponse(error.response || { data: error.message, status: error.status || 500, statusText: error.statusText || 'Axios Error' });
+    }
   }
 
   async sourcemaps(request) {
     output.verbose('', 'minified_url: ' + request.minified_url);
 
     const form = this.convertRequestToForm(request);
-    const resp = await this.axios.post(
-      '/sourcemap',
-      form.getBuffer(), // use buffer to prevent unwanted string escaping.
-      { headers: {
-        // axios needs some help with headers for form data.
-        'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
-        'Content-Length': form.getLengthSync()
-      }}
-    );
-
-    return this.processResponse(resp);
+    try {
+      const resp = await this.axios.post(
+        '/sourcemap',
+        form.getBuffer(), // use buffer to prevent unwanted string escaping.
+        { headers: {
+          // axios needs some help with headers for form data.
+          'Content-Type': `multipart/form-data; boundary=${form.getBoundary()}`,
+          'Content-Length': form.getLengthSync()
+        }}
+      );
+      return this.processResponse(resp);
+    } catch (error) {
+      output.verbose('', 'axios threw error:', error);
+      return this.processResponse(error.response || { data: error.message, status: error.status || 500, statusText: error.statusText || 'Axios Error' });
+    }
   }
 
   convertRequestToForm(request) {
@@ -80,15 +106,15 @@ class RollbarAPI {
 
   processSignedURLResponse(resp) {
     output.verbose('', 'response:', resp.data, resp.status, resp.statusText);
-    return resp.data;
+    if (resp.status === 200) {
+      return resp.data;
+    }
+    return normalizeAxiosError(resp);
   }
 
   processResponse(resp) {
     output.verbose('', 'response:', resp.data, resp.status, resp.statusText);
-    if (resp.status === 200) {
-      return null;
-    }
-    return resp.data;
+    return normalizeAxiosError(resp);
   }
 }
 

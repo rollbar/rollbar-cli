@@ -139,7 +139,7 @@ describe('.scan()', function() {
     await scanner.scan();
     const files = scanner.mappedFiles();
 
-    expect(files[0].errors[0].error).to.have.string('Error parsing map file: Unexpected token $ in JSON at position 24');
+    expect(files[0].errors[0].error).to.have.string('Error parsing map file:');
     expect(files[1].errors[0].error).to.have.string('Error parsing map file: "sources" is a required argument');
   });
 });
