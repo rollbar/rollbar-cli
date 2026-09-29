@@ -10,8 +10,8 @@
     "test": "nyc --reporter=html --reporter=text mocha './test/{,!(fixtures)/**/}*test.js'"
   },
   "dependencies": {
-    "adm-zip": "^0.5.2",
-    "axios": "1.15.0",
+    "adm-zip": "^0.6.1",
+    "axios": "1.20.0",
     "chalk": "^4.1.0",
     "form-data": "^3.0.0",
     "glob": "^7.1.6",
