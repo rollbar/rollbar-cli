@@ -63,6 +63,9 @@ class SignedUrlUploader {
         headers: {
           'Content-Type': 'application/octet-stream',
         },
+        // Don't cap the zip size client side; the signed URL decides what it accepts.
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
       });
       if (resp.status === 200) {
         output.status('Success', 'Uploaded zip file successfully');
