@@ -63,7 +63,8 @@ class SignedUrlUploader {
         headers: {
           'Content-Type': 'application/octet-stream',
         },
-        // Don't cap the zip size client side; the signed URL decides what it accepts.
+        // maxBodyLength: don't cap the upload size client side; the signed URL
+        // decides what it accepts. maxContentLength (response size) matches RollbarAPI.
         maxContentLength: Infinity,
         maxBodyLength: Infinity,
       });

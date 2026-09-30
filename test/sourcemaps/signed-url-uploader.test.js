@@ -69,9 +69,12 @@ describe('.upload()', function() {
       statusText: 'Success',
     });
 
-    await signedUrlUploader.upload(false, files);
-    expect(stub.callCount).to.equal(1);
-    stub.restore();
+    try {
+      await signedUrlUploader.upload(false, files);
+      expect(stub.callCount).to.equal(1);
+    } finally {
+      stub.restore();
+    }
   });
 
   it('should upload zips larger than 10 MB', async function() {
