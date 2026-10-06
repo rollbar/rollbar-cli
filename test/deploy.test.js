@@ -5,7 +5,7 @@ const exec = require('child_process').exec;
 const execSync = require('child_process').execSync;
 
 describe('rollbar-cli notify-deploy', function() {
-  it('returns help output', done => {
+  it('returns help output', function(done) {
     this.timeout(5000);
 
     exec('./bin/rollbar notify-deploy --help', 'utf8', (_err, stdout, _stderr) => {
@@ -14,7 +14,7 @@ describe('rollbar-cli notify-deploy', function() {
     })
   });
 
-  it('should handle error response', done => {
+  it('should handle error response', function(done) {
     this.timeout(5000);
 
     const stdout = execSync('./bin/rollbar notify-deploy --access-token 1234 --code-version 1.0.1 --environment production --rollbar-username foobar --status succeeded --deploy-id 12345678 --local-username foo_bar --comment \'Deploy Test\'');
