@@ -64,6 +64,10 @@ class SignedUrlUploader {
         headers: {
           'Content-Type': 'application/octet-stream',
         },
+        // maxBodyLength: don't cap the upload size client side; the signed URL
+        // decides what it accepts. maxContentLength (response size) matches RollbarAPI.
+        maxContentLength: Infinity,
+        maxBodyLength: Infinity,
       });
       if (resp.status === 200) {
         output.status('Success', 'Uploaded zip file successfully');

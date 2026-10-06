@@ -8,6 +8,7 @@ const sinon = require('sinon');
 const axios = require('axios')
 const AdmZip = require('adm-zip');
 const fs = require('fs');
+const http = require('http');
 const path = require('path');
 
 const SignedUrlUploader = require('../../src/sourcemaps/signed-url-uploader');
@@ -195,5 +196,28 @@ describe('.upload()', function() {
     await signedUrlUploader.upload(true, files, signedUrl);
 
     expect(stub.called).to.be.false;
+  });
+
+  it('should upload zips larger than 10 MB', async function() {
+    let received = 0;
+    const server = http.createServer((req, res) => {
+      req.on('data', (chunk) => { received += chunk.length; });
+      req.on('end', () => { res.writeHead(200); res.end(); });
+    });
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+    const size = 11 * 1024 * 1024;
+    const signedUrlUploader = new SignedUrlUploader();
+    signedUrlUploader.zipFiles = function() { this.zipBuffer = Buffer.alloc(size); };
+    const spy = sinon.spy(axios, 'put');
+
+    try {
+      await signedUrlUploader.upload(false, [], `http://127.0.0.1:${server.address().port}/`);
+    } finally {
+      server.close();
+    }
+
+    expect(spy.firstCall.args[2].maxBodyLength).to.equal(Infinity);
+    expect(received).to.equal(size);
   });
 });
