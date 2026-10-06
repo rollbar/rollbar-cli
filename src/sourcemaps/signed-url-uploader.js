@@ -2,7 +2,6 @@
 
 const AdmZip = require('adm-zip');
 const axios = require('axios');
-const zipFile = new AdmZip();
 
 class SignedUrlUploader {
   constructor(requester) {
@@ -20,6 +19,8 @@ class SignedUrlUploader {
   }
 
   zipFiles() {
+    // A fresh archive per call, so entries don't carry over between uploads.
+    const zipFile = new AdmZip();
 
     try {
       zipFile.addFile('manifest.json', this.requester.manifestData);
