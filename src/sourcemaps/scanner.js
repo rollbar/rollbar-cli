@@ -21,6 +21,7 @@ class Scanner {
     this.basePath = this.targetIsFile ? path.dirname(this.targetPath) : this.targetPath;
     this.projectPath = './';
     this.sources = options.sources;
+    this.bundleName = options.bundleName;
   }
 
   async scan() {
@@ -28,7 +29,9 @@ class Scanner {
   }
 
   async scanFiles() {
-    if (this.targetPath) {
+    if (this.bundleName && !this.targetIsFile) {
+      output.warn('', '--bundle-name needs <path> to be a single bundle or source map file: ' + this.targetPath);
+    } else if (this.targetPath) {
       this.files = this.targetFiles();
 
       if (!this.files.length) {
@@ -70,8 +73,17 @@ class Scanner {
   extractMapPath(file) {
     let mapPath;
 
-    if (MAP_REGEX.test(file.filePathName)) {
+    if (file.isMap) {
       // <path> is the map itself, e.g. a Hermes build's index.android.bundle.map.
+      if (!file.fileName) {
+        file.errors.push({
+          error: 'the map\'s name doesn\'t say which bundle it is for: pass --bundle-name, ' +
+            'e.g. main.jsbundle (iOS) or index.android.bundle (Android)',
+          file: file
+        });
+        return;
+      }
+
       mapPath = path.basename(file.filePathName);
     } else {
       mapPath = this.parseMapPath(file.filePathName);
@@ -81,6 +93,10 @@ class Scanner {
       } else if (RN_BUNDLE_REGEX.test(file.filePathName)) {
         // Hermes bytecode bundles have no sourceMappingURL directive.
         mapPath = this.adjacentMapPath(file.filePathName);
+      } else if (this.isSourceMap(file.filePathName)) {
+        // e.g. sourcemap.ios.js from react-native bundle --sourcemap-output, found in a directory.
+        output.warn('', 'this is a source map, not a bundle: pass it as <path> with --bundle-name');
+        return;
       }
     }
 
@@ -199,7 +215,7 @@ class Scanner {
 
   targetFiles() {
     if (this.targetIsFile) {
-      return [this.initFile(this.targetPath)];
+      return [this.initFile(this.targetPath, this.isSourceMap(this.targetPath))];
     }
 
     const globPath = path.join(this.targetPath, BUNDLE_GLOB);
@@ -213,19 +229,30 @@ class Scanner {
     return outFiles;
   }
 
-  initFile(filePathName) {
-    // A .map uploads for the bundle it is named after: main.jsbundle.map -> main.jsbundle.
-    let fileName = path.relative(this.basePath, filePathName).replace(MAP_REGEX, '');
+  initFile(filePathName, isMap = false) {
+    let fileName = path.relative(this.basePath, filePathName);
+
+    if (isMap) {
+      // A .map uploads for the bundle it is named after: main.jsbundle.map -> main.jsbundle.
+      // Any other map name, like sourcemap.ios.js, needs --bundle-name.
+      fileName = MAP_REGEX.test(fileName) ? fileName.replace(MAP_REGEX, '') : null;
+    }
 
     // React Native frames are http://reactnativehost/<bundle name>, without any build
     // directory, so a bundle found in a subdirectory still uploads under its own name.
-    if (RN_BUNDLE_REGEX.test(fileName)) {
+    if (fileName && RN_BUNDLE_REGEX.test(fileName)) {
       fileName = path.basename(fileName);
+    }
+
+    // Only set when <path> is a single file.
+    if (this.bundleName) {
+      fileName = this.bundleName;
     }
 
     return {
       filePathName: filePathName,
       fileName: fileName,
+      isMap: isMap,
       sourceMappingURL: false,
       mapPathName: null,
       mapData: null,
@@ -245,6 +272,26 @@ class Scanner {
       if (matched) {
         return matched[1];
       }
+    }
+  }
+
+  isSourceMap(filePathName) {
+    if (MAP_REGEX.test(filePathName)) {
+      return true;
+    }
+
+    // react-native bundle --sourcemap-output can write the map under any name, and Rollbar's
+    // React Native docs use sourcemap.ios.js, so recognize a map by its content too.
+    const data = fs.readFileSync(filePathName).toString();
+    if (!/^\s*\{/.test(data)) {
+      return false;
+    }
+
+    try {
+      const map = JSON.parse(data);
+      return !!map && map.version !== undefined && (typeof map.mappings === 'string' || Array.isArray(map.sections));
+    } catch (e) {
+      return false;
     }
   }
 

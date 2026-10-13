@@ -24,7 +24,7 @@ Currently upload-sourcemaps and notify-deploy commands are supported.
 
 ### upload-sourcemaps
 Upload source maps for a build directory (scanned recursively), a single bundle file, or a
-single `.map` file.
+single source map file.
 
 ```
 rollbar-cli upload-sourcemaps <path> [options]
@@ -40,6 +40,8 @@ Options:
   --url-prefix    Base part of the stack trace URLs          [string] [required]
   --code-version  Code version string must match value in the Rollbar item
                                                              [string] [required]
+  --bundle-name   Bundle the map is for, when <path> is a single map not named
+                  <bundle>.map, e.g. main.jsbundle                      [string]
   --next          Next version. Zip all the source map files and upload as one
                   file                                                 [boolean]
   -D, --dry-run   Scan and validate source maps without uploading      [boolean]
@@ -48,11 +50,12 @@ Options:
 Some of these options are required and must be specified for a successful upload.
 
 `path`: Absolute or relative path to a build directory, a single bundle file, or a
-single `.map` file. The directory is scanned recursively for `.js`, `.jsbundle` and `.bundle`
+single source map file. The directory is scanned recursively for `.js`, `.jsbundle` and `.bundle`
 files, and each file's map is found through its `sourceMappingURL` directive. React Native
 bundles (`.jsbundle`, `.bundle`) without a directive, such as Hermes bytecode, use the
 `<bundle>.map` file next to them. A `.map` file is uploaded for the bundle it is named after,
-so `main.jsbundle.map` is uploaded for `main.jsbundle`. React Native bundles are uploaded under
+so `main.jsbundle.map` is uploaded for `main.jsbundle`. A source map with any other name, such
+as `sourcemap.ios.js`, needs `--bundle-name`. React Native bundles are uploaded under
 the bundle name alone, even when they are found in a subdirectory of `path`.
 
 `--access-token`: The Rollbar API `post_server_item` token.
@@ -65,6 +68,10 @@ and it must exactly match the URLs in the error stack frames. See `minified_url`
 `--code-version`: The code version string must match the string passed in the Rollbar
 error payload, which is usually set in the config options for Rollbar.js.
 See [Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
+
+`--bundle-name`: The bundle a single source map file is for, such as `main.jsbundle`. The map is
+uploaded for `<url-prefix><bundle-name>`. Required when `path` is a source map whose name doesn't
+end in `<bundle>.map`; only valid when `path` is a single file.
 
 `--next`: This is an optional parameter triggering next version. When specified, all source map files
 are compressed and uploaded as one zip file directly. Each map is uploaded for the same URL as
@@ -82,8 +89,16 @@ rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http:/
 #### React Native
 
 Rollbar's React Native SDK reports stack frames as `http://reactnativehost/<bundle name>`,
-so use `http://reactnativehost/` as the `--url-prefix` and make sure the map is named after
-the bundle: `main.jsbundle.map` on iOS and `index.android.bundle.map` on Android.
+so use `http://reactnativehost/` as the `--url-prefix`, and either name the map after the bundle
+(`main.jsbundle.map` on iOS, `index.android.bundle.map` on Android) or pass `--bundle-name`.
+For a map generated as in [Rollbar's React Native docs](https://docs.rollbar.com/docs/react-native),
+with `react-native bundle --bundle-output ios/main.jsbundle --sourcemap-output sourcemap.ios.js`:
+
+```
+rollbar-cli upload-sourcemaps sourcemap.ios.js --bundle-name main.jsbundle --access-token 638d... --url-prefix 'http://reactnativehost/' --code-version 1.2.3
+```
+On Android, `--sourcemap-output sourcemap.android.js` goes with `--bundle-name index.android.bundle`.
+
 The bundle is uploaded as `http://reactnativehost/<bundle name>` whichever directory it is
 found in, so prefer pointing `path` at one bundle or map: a whole build folder can hold several
 copies of the same bundle, and the CLI warns when more than one map would upload under the

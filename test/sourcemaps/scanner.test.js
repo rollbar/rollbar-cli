@@ -192,6 +192,94 @@ describe('.scan()', function() {
     expect(files[0].validated).to.be.true;
   });
 
+  // Rollbar's React Native docs generate maps with --sourcemap-output sourcemap.ios.js (#16).
+  it('should scan a single map not named after its bundle with --bundle-name', async function() {
+    const options = {
+      targetPath: './test/fixtures/builds/react-native-sourcemap/sourcemap.ios.js',
+      bundleName: 'main.jsbundle'
+    };
+    const scanner = new Scanner(options);
+    await scanner.scan();
+    const files = scanner.mappedFiles();
+
+    expect(files.length).to.equal(1);
+    expect(files[0].fileName).to.equal('main.jsbundle');
+    expect(files[0].isMap).to.be.true;
+    expect(files[0].mapPathName).to.equal('sourcemap.ios.js');
+    expect(files[0].mappedFile).to.equal('test/fixtures/builds/react-native-sourcemap/sourcemap.ios.js');
+    expect(files[0].validated).to.be.true;
+    expect(files[0].errors).to.be.an('array').that.is.empty;
+  });
+
+  it('should ask for --bundle-name for a single map not named after its bundle', async function() {
+    const options = {
+      targetPath: './test/fixtures/builds/react-native-sourcemap/sourcemap.ios.js'
+    };
+    const scanner = new Scanner(options);
+    await scanner.scan();
+    const files = scanner.mappedFiles();
+
+    expect(files.length).to.equal(1);
+    expect(files[0].fileName).to.be.null;
+    expect(files[0].isMap).to.be.true;
+    expect(files[0].mapPathName).to.be.null;
+    expect(files[0].validated).to.be.false;
+    expect(files[0].errors[0].error).to.have.string('pass --bundle-name');
+  });
+
+  it('should let --bundle-name override the name of a .map file', async function() {
+    const options = {
+      targetPath: './test/fixtures/builds/react-native/android/index.android.bundle.map',
+      bundleName: 'main.jsbundle'
+    };
+    const scanner = new Scanner(options);
+    await scanner.scan();
+    const files = scanner.mappedFiles();
+
+    expect(files.length).to.equal(1);
+    expect(files[0].fileName).to.equal('main.jsbundle');
+    expect(files[0].validated).to.be.true;
+  });
+
+  it('should not treat a source map found in a directory as a bundle', async function() {
+    const options = {
+      targetPath: './test/fixtures/builds/react-native-sourcemap'
+    };
+    const scanner = new Scanner(options);
+    const stub = sinon.stub(global.output, 'warn');
+
+    try {
+      await scanner.scan();
+    } finally {
+      stub.restore();
+    }
+    const files = scanner.mappedFiles();
+
+    expect(files.length).to.equal(1);
+    expect(files[0].isMap).to.be.false;
+    expect(files[0].mapPathName).to.be.null;
+    expect(files[0].validated).to.be.false;
+    expect(stub.calledWith('', 'this is a source map, not a bundle: pass it as <path> with --bundle-name')).to.be.true;
+  });
+
+  it('should refuse --bundle-name for a directory', async function() {
+    const options = {
+      targetPath: './test/fixtures/builds/react-native',
+      bundleName: 'main.jsbundle'
+    };
+    const scanner = new Scanner(options);
+    const stub = sinon.stub(global.output, 'warn');
+
+    try {
+      await scanner.scan();
+    } finally {
+      stub.restore();
+    }
+
+    expect(scanner.mappedFiles()).to.be.an('array').that.is.empty;
+    expect(stub.firstCall.args[1]).to.have.string('--bundle-name needs <path> to be a single bundle or source map file');
+  });
+
   it('should resolve maps next to bundles in subdirectories', async function() {
     const options = {
       targetPath: './test/fixtures/builds/react16/build'

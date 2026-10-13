@@ -147,6 +147,32 @@ describe('.upload()', function() {
     stub.restore();
   });
 
+  it('should upload a map not named after its bundle for --bundle-name', async function() {
+    const scanner = new Scanner({
+      targetPath: './test/fixtures/builds/react-native-sourcemap/sourcemap.ios.js',
+      bundleName: 'main.jsbundle'
+    });
+    await scanner.scan();
+
+    // The --url-prefix from #16, without a trailing slash.
+    const uploader = new Uploader({
+      accessToken: 'abcd',
+      baseUrl: 'http://reactnativehost',
+      codeVersion: '123'
+    });
+    const stub = sinon.stub(uploader.rollbarAPI, 'sourcemaps');
+    stub.resolves(null);
+
+    uploader.mapFiles(scanner.mappedFiles());
+
+    await uploader.upload();
+
+    expect(stub.callCount).to.equal(1);
+    expect(stub.firstCall.args[0].minified_url).to.equal('http://reactnativehost/main.jsbundle');
+
+    stub.restore();
+  });
+
   it('should handle and report API errors', async function() {
     const scannerOptions = {
       targetPath: './test/fixtures/builds/react16/build',
