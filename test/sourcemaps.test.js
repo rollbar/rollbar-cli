@@ -27,6 +27,18 @@ describe('rollbar-cli upload-sourcemaps', function() {
     expect(lines.filter((line) => line.startsWith('[Found ]'))).to.have.lengthOf(5);
   });
 
+  it('uploads a react native bundle file', function() {
+    this.timeout(5000);
+
+    const stdout = execSync('./bin/rollbar upload-sourcemaps ./test/fixtures/builds/react-native/ios/main.jsbundle --access-token 1234 --url-prefix "http://reactnativehost/" --code-version rn -D');
+
+    const lines = stdout.toString().split('\n');
+
+    expect(lines.filter((line) => line.startsWith('[Found ]'))).to.have.lengthOf(1);
+    expect(stdout.toString()).to.have.string('main.jsbundle.map');
+    expect(stdout.toString()).to.have.string('valid');
+  });
+
   it('uploads react project via signed URL', function() {
     this.timeout(5000);
 

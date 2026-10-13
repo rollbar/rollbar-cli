@@ -46,10 +46,12 @@ Options:
 
 Some of these options are required and must be specified for a successful upload.
 
-`path`: Absolute or relative path to build directory. This directory should contain .js
-files with `sourceMappingURL` directives included. The current version of the CLI
-supports detecting files with `sourceMappingURL` directives and uploading related
-map files within a directory.
+`path`: Absolute or relative path to a build directory, a single bundle file, or a
+single `.map` file. The directory is scanned recursively for `.js`, `.jsbundle` and `.bundle`
+files, and each file's map is found through its `sourceMappingURL` directive. React Native
+bundles (`.jsbundle`, `.bundle`) without a directive, such as Hermes bytecode, use the
+`<bundle>.map` file next to them. A `.map` file is uploaded for the bundle it is named after,
+so `main.jsbundle.map` is uploaded for `main.jsbundle`.
 
 `--access-token`: The Rollbar API `post_server_item` token.
 
@@ -72,6 +74,21 @@ rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http:/
 or
 ```
 rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http://example.com/' --code-version 123.456 --next
+```
+
+#### React Native
+
+Rollbar's React Native SDK reports stack frames as `http://reactnativehost/<bundle name>`,
+so use `http://reactnativehost/` as the `--url-prefix` and make sure the map is named after
+the bundle: `main.jsbundle.map` on iOS and `index.android.bundle.map` on Android.
+You can point `path` at the map file directly, which also works for Hermes builds:
+
+```
+rollbar-cli upload-sourcemaps android/app/build/generated/sourcemaps/react/release/index.android.bundle.map --access-token 638d... --url-prefix 'http://reactnativehost/' --code-version 1.2.3
+```
+or at a bundle produced by `react-native bundle --bundle-output build/main.jsbundle --sourcemap-output build/main.jsbundle.map`:
+```
+rollbar-cli upload-sourcemaps build/main.jsbundle --access-token 638d... --url-prefix 'http://reactnativehost/' --code-version 1.2.3
 ```
 
 ### notify-deploy

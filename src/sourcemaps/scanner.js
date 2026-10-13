@@ -5,11 +5,20 @@ const glob = require('glob');
 const path = require('path');
 const BasicSourceMapConsumer = require('source-map/lib/source-map-consumer').BasicSourceMapConsumer;
 
+// Besides .js, React Native bundles are main.jsbundle (iOS) and index.android.bundle (Android).
+const BUNDLE_GLOB = '**/*.{js,jsbundle,bundle}';
+const RN_BUNDLE_REGEX = /\.(jsbundle|bundle)$/;
+const MAP_REGEX = /\.map$/;
+
 class Scanner {
   constructor(options) {
     this.files = [];
     this.mappings = {};
     this.targetPath = options.targetPath;
+    // <path> may be a build directory, a single bundle file or a single .map file.
+    this.targetIsFile = !!this.targetPath && fs.existsSync(this.targetPath) &&
+      fs.statSync(this.targetPath).isFile();
+    this.basePath = this.targetIsFile ? path.dirname(this.targetPath) : this.targetPath;
     this.projectPath = './';
     this.sources = options.sources;
   }
@@ -21,6 +30,10 @@ class Scanner {
   async scanFiles() {
     if (this.targetPath) {
       this.files = this.targetFiles();
+
+      if (!this.files.length) {
+        output.warn('', 'no .js, .jsbundle or .bundle files found at ' + this.targetPath);
+      }
     }
 
     for (const file of this.files) {
@@ -37,13 +50,26 @@ class Scanner {
   }
 
   extractMapPath(file) {
-    const mapPath = this.parseMapPath(file.filePathName);
+    let mapPath;
+
+    if (MAP_REGEX.test(file.filePathName)) {
+      // <path> is the map itself, e.g. a Hermes build's index.android.bundle.map.
+      mapPath = path.basename(file.filePathName);
+    } else {
+      mapPath = this.parseMapPath(file.filePathName);
+
+      if (mapPath) {
+        file.sourceMappingURL = true;
+      } else if (RN_BUNDLE_REGEX.test(file.filePathName)) {
+        // Hermes bytecode bundles have no sourceMappingURL directive.
+        mapPath = this.adjacentMapPath(file.filePathName);
+      }
+    }
 
     if(mapPath) {
       output.status('', mapPath);
       file.mapPathName = mapPath;
-      file.sourceMappingURL = true;
-      file.mappedFile = path.join(this.targetPath, mapPath);
+      file.mappedFile = path.join(path.dirname(file.filePathName), mapPath);
 
     } else {
       output.warn('', 'map not found');
@@ -154,10 +180,14 @@ class Scanner {
   }
 
   targetFiles() {
-    const globPath = path.join(this.targetPath, '**/*.js');
+    if (this.targetIsFile) {
+      return [this.initFile(this.targetPath)];
+    }
+
+    const globPath = path.join(this.targetPath, BUNDLE_GLOB);
     const outFiles = [];
 
-    const files = glob.sync(globPath);
+    const files = glob.sync(globPath, { nodir: true });
     for (const filename of files) {
       outFiles.push(this.initFile(filename));
     }
@@ -168,7 +198,8 @@ class Scanner {
   initFile(filePathName) {
     return {
       filePathName: filePathName,
-      fileName: path.relative(this.targetPath, filePathName),
+      // A .map uploads for the bundle it is named after: main.jsbundle.map -> main.jsbundle.
+      fileName: path.relative(this.basePath, filePathName).replace(MAP_REGEX, ''),
       sourceMappingURL: false,
       mapPathName: null,
       mapData: null,
@@ -188,6 +219,14 @@ class Scanner {
       if (matched) {
         return matched[1];
       }
+    }
+  }
+
+  adjacentMapPath(filePathName) {
+    const mapName = path.basename(filePathName) + '.map';
+
+    if (fs.existsSync(path.join(path.dirname(filePathName), mapName))) {
+      return mapName;
     }
   }
 }
