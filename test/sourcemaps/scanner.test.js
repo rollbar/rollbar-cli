@@ -3,7 +3,7 @@
 /* globals beforeEach */
 
 const expect = require('chai').expect;
-//const sinon = require('sinon');
+const sinon = require('sinon');
 
 const Scanner = require('../../src/sourcemaps/scanner');
 const Output = require('../../src/common/output');
@@ -142,14 +142,15 @@ describe('.scan()', function() {
     expect(files.length).to.equal(2);
 
     // Hermes bytecode has no sourceMappingURL directive, so the adjacent map is used.
-    expect(files[0].fileName).to.equal('android/index.android.bundle');
+    // React Native frames carry only the bundle name, so the subdirectory is dropped.
+    expect(files[0].fileName).to.equal('index.android.bundle');
     expect(files[0].sourceMappingURL).to.be.false;
     expect(files[0].mapPathName).to.equal('index.android.bundle.map');
     expect(files[0].mappedFile).to.equal('test/fixtures/builds/react-native/android/index.android.bundle.map');
     expect(files[0].validated).to.be.true;
     expect(files[0].errors).to.be.an('array').that.is.empty;
 
-    expect(files[1].fileName).to.equal('ios/main.jsbundle');
+    expect(files[1].fileName).to.equal('main.jsbundle');
     expect(files[1].sourceMappingURL).to.be.true;
     expect(files[1].mapPathName).to.equal('main.jsbundle.map');
     expect(files[1].mappedFile).to.equal('test/fixtures/builds/react-native/ios/main.jsbundle.map');
@@ -198,6 +199,26 @@ describe('.scan()', function() {
 
     expect(files[3].fileName).to.equal('static/js/main.d504f0ad.chunk.js');
     expect(files[3].mappedFile).to.equal('test/fixtures/builds/react16/build/static/js/main.d504f0ad.chunk.js.map');
+  });
+
+  it('should warn when several maps upload under the same name', function() {
+    const scanner = new Scanner({ targetPath: './test/fixtures/builds/react-native' });
+    scanner.files = [
+      { fileName: 'index.android.bundle', filePathName: 'a/index.android.bundle', validated: true },
+      { fileName: 'index.android.bundle', filePathName: 'b/index.android.bundle', validated: true },
+      { fileName: 'main.jsbundle', filePathName: 'c/main.jsbundle', validated: true },
+      { fileName: 'main.jsbundle', filePathName: 'd/main.jsbundle', validated: false }
+    ];
+    const stub = sinon.stub(global.output, 'warn');
+
+    scanner.warnDuplicateNames();
+
+    expect(stub.callCount).to.equal(1);
+    expect(stub.firstCall.args[1]).to.equal(
+      '2 maps upload as index.android.bundle, so only one can apply: a/index.android.bundle, b/index.android.bundle'
+    );
+
+    stub.restore();
   });
 
   it('should find no files at a missing path', async function() {

@@ -46,7 +46,25 @@ class Scanner {
         output.warn('Error', error.error);
       }
     }
+
+    this.warnDuplicateNames();
     output.verbose('files:', this.files);
+  }
+
+  warnDuplicateNames() {
+    const pathsByName = {};
+
+    for (const file of this.files) {
+      if (file.validated) {
+        (pathsByName[file.fileName] = pathsByName[file.fileName] || []).push(file.filePathName);
+      }
+    }
+
+    for (const [fileName, paths] of Object.entries(pathsByName)) {
+      if (paths.length > 1) {
+        output.warn('', `${paths.length} maps upload as ${fileName}, so only one can apply: ${paths.join(', ')}`);
+      }
+    }
   }
 
   extractMapPath(file) {
@@ -196,10 +214,18 @@ class Scanner {
   }
 
   initFile(filePathName) {
+    // A .map uploads for the bundle it is named after: main.jsbundle.map -> main.jsbundle.
+    let fileName = path.relative(this.basePath, filePathName).replace(MAP_REGEX, '');
+
+    // React Native frames are http://reactnativehost/<bundle name>, without any build
+    // directory, so a bundle found in a subdirectory still uploads under its own name.
+    if (RN_BUNDLE_REGEX.test(fileName)) {
+      fileName = path.basename(fileName);
+    }
+
     return {
       filePathName: filePathName,
-      // A .map uploads for the bundle it is named after: main.jsbundle.map -> main.jsbundle.
-      fileName: path.relative(this.basePath, filePathName).replace(MAP_REGEX, ''),
+      fileName: fileName,
       sourceMappingURL: false,
       mapPathName: null,
       mapData: null,

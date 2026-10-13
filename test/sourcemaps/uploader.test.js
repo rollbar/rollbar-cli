@@ -96,6 +96,33 @@ describe('.upload()', function() {
     stub.restore();
   });
 
+  it('should upload React Native bundles in subdirectories under their bundle name', async function() {
+    const scanner = new Scanner({
+      targetPath: './test/fixtures/builds/react-native'
+    });
+    await scanner.scan();
+
+    const uploader = new Uploader({
+      accessToken: 'abcd',
+      baseUrl: 'http://reactnativehost/',
+      codeVersion: '123'
+    });
+    const stub = sinon.stub(uploader.rollbarAPI, 'sourcemaps');
+    stub.resolves(null);
+
+    uploader.mapFiles(scanner.mappedFiles());
+
+    await uploader.upload();
+
+    expect(stub.callCount).to.equal(2);
+    expect(stub.getCalls().map((call) => call.args[0].minified_url)).to.have.members([
+      'http://reactnativehost/index.android.bundle',
+      'http://reactnativehost/main.jsbundle'
+    ]);
+
+    stub.restore();
+  });
+
   it('should upload a React Native map file for the bundle it is named after', async function() {
     const scanner = new Scanner({
       targetPath: './test/fixtures/builds/react-native/android/index.android.bundle.map'

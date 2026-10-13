@@ -35,8 +35,7 @@ describe('rollbar-cli upload-sourcemaps', function() {
     const lines = stdout.toString().split('\n');
 
     expect(lines.filter((line) => line.startsWith('[Found ]'))).to.have.lengthOf(1);
-    expect(stdout.toString()).to.have.string('main.jsbundle.map');
-    expect(stdout.toString()).to.have.string('valid');
+    expect(lines.map((line) => line.trim())).to.include.members(['main.jsbundle.map', 'valid']);
   });
 
   it('uploads react project via signed URL', function() {

@@ -23,7 +23,8 @@ npm install -g rollbar-cli
 Currently upload-sourcemaps and notify-deploy commands are supported.
 
 ### upload-sourcemaps
-Upload source maps recursively from a directory.
+Upload source maps for a build directory (scanned recursively), a single bundle file, or a
+single `.map` file.
 
 ```
 rollbar-cli upload-sourcemaps <path> [options]
@@ -51,7 +52,8 @@ single `.map` file. The directory is scanned recursively for `.js`, `.jsbundle` 
 files, and each file's map is found through its `sourceMappingURL` directive. React Native
 bundles (`.jsbundle`, `.bundle`) without a directive, such as Hermes bytecode, use the
 `<bundle>.map` file next to them. A `.map` file is uploaded for the bundle it is named after,
-so `main.jsbundle.map` is uploaded for `main.jsbundle`.
+so `main.jsbundle.map` is uploaded for `main.jsbundle`. React Native bundles are uploaded under
+the bundle name alone, even when they are found in a subdirectory of `path`.
 
 `--access-token`: The Rollbar API `post_server_item` token.
 
@@ -81,7 +83,10 @@ rollbar-cli upload-sourcemaps ./dist --access-token 638d... --url-prefix 'http:/
 Rollbar's React Native SDK reports stack frames as `http://reactnativehost/<bundle name>`,
 so use `http://reactnativehost/` as the `--url-prefix` and make sure the map is named after
 the bundle: `main.jsbundle.map` on iOS and `index.android.bundle.map` on Android.
-You can point `path` at the map file directly, which also works for Hermes builds:
+The bundle is uploaded as `http://reactnativehost/<bundle name>` whichever directory it is
+found in, so prefer pointing `path` at one bundle or map: a whole build folder can hold several
+copies of the same bundle, and the CLI warns when more than one map would upload under the
+same name. Pointing `path` at the map file directly also works for Hermes builds:
 
 ```
 rollbar-cli upload-sourcemaps android/app/build/generated/sourcemaps/react/release/index.android.bundle.map --access-token 638d... --url-prefix 'http://reactnativehost/' --code-version 1.2.3
