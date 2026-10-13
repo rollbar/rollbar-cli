@@ -67,7 +67,8 @@ error payload, which is usually set in the config options for Rollbar.js.
 See [Source Maps](https://docs.rollbar.com/docs/source-maps) for more information.
 
 `--next`: This is an optional parameter triggering next version. When specified, all source map files
-are compressed and uploaded as one zip file directly.
+are compressed and uploaded as one zip file directly. Each map is uploaded for the same URL as
+without `--next`.
 
 Example:
 ```
@@ -86,7 +87,8 @@ the bundle: `main.jsbundle.map` on iOS and `index.android.bundle.map` on Android
 The bundle is uploaded as `http://reactnativehost/<bundle name>` whichever directory it is
 found in, so prefer pointing `path` at one bundle or map: a whole build folder can hold several
 copies of the same bundle, and the CLI warns when more than one map would upload under the
-same name. Pointing `path` at the map file directly also works for Hermes builds:
+same name. `--next` uploads React Native maps under the same names. Pointing `path` at the map
+file directly also works for Hermes builds:
 
 ```
 rollbar-cli upload-sourcemaps android/app/build/generated/sourcemaps/react/release/index.android.bundle.map --access-token 638d... --url-prefix 'http://reactnativehost/' --code-version 1.2.3

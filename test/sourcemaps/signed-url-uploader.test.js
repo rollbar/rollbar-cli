@@ -24,8 +24,8 @@ const manifestData = JSON.stringify({
   baseUrl: 'http://localhost:3000/'
 }, null, 2);
 
-async function scanFiles() {
-  const scanner = new Scanner({ targetPath: targetPath, sources: true });
+async function scanFiles(scanPath = targetPath) {
+  const scanner = new Scanner({ targetPath: scanPath, sources: true });
   await scanner.scan();
   return scanner.mappedFiles();
 }
@@ -68,21 +68,21 @@ describe('.zipFiles()', function() {
     signedUrlUploader.zipFiles();
 
     const entries = readZip(signedUrlUploader.zipBuffer);
-    const expectedNames = ['manifest.json'].concat(validated.map((file) => path.basename(file.mappedFile)));
+    const expectedNames = ['manifest.json'].concat(validated.map((file) => file.fileName + '.map'));
     expect(Object.keys(entries)).to.have.members(expectedNames);
 
     // manifestData is a string; it must round-trip unchanged.
     expect(entries['manifest.json'].toString()).to.equal(manifestData);
     for (const file of validated) {
-      const entry = entries[path.basename(file.mappedFile)];
+      const entry = entries[file.fileName + '.map'];
       expect(entry.equals(fs.readFileSync(file.mappedFile))).to.be.true;
     }
   });
 
   it('should leave out files that failed validation', async function() {
     const files = [
-      { validated: true, mappedFile: path.join(targetPath, 'main-es5.js.map') },
-      { validated: false, mappedFile: path.join(targetPath, 'runtime-es5.js.map') }
+      { validated: true, fileName: 'main-es5.js', mappedFile: path.join(targetPath, 'main-es5.js.map') },
+      { validated: false, fileName: 'runtime-es5.js', mappedFile: path.join(targetPath, 'runtime-es5.js.map') }
     ];
 
     const signedUrlUploader = new SignedUrlUploader({ manifestData: manifestData });
@@ -91,6 +91,49 @@ describe('.zipFiles()', function() {
 
     const entries = readZip(signedUrlUploader.zipBuffer);
     expect(Object.keys(entries)).to.have.members(['manifest.json', 'main-es5.js.map']);
+  });
+
+  // The server uploads each entry for <baseUrl><entry name without .map>, so entries must be
+  // named after fileName to get the same minified_url as the standard upload.
+  it('should name nested web build maps after their path in the build', async function() {
+    const files = await scanFiles('./test/fixtures/builds/react16/build');
+
+    const signedUrlUploader = new SignedUrlUploader({ manifestData: manifestData });
+    signedUrlUploader.mapFiles(files);
+    signedUrlUploader.zipFiles();
+
+    expect(Object.keys(readZip(signedUrlUploader.zipBuffer))).to.have.members([
+      'manifest.json',
+      'static/js/2.373ccd69.chunk.js.map',
+      'static/js/main.d504f0ad.chunk.js.map',
+      'static/js/runtime~main.a8a9905a.js.map'
+    ]);
+  });
+
+  it('should name React Native maps after the bundle name alone', async function() {
+    const files = await scanFiles('./test/fixtures/builds/react-native');
+
+    const signedUrlUploader = new SignedUrlUploader({ manifestData: manifestData });
+    signedUrlUploader.mapFiles(files);
+    signedUrlUploader.zipFiles();
+
+    expect(Object.keys(readZip(signedUrlUploader.zipBuffer))).to.have.members([
+      'manifest.json', 'index.android.bundle.map', 'main.jsbundle.map'
+    ]);
+  });
+
+  it('should name a map after its bundle even when the map is named differently', async function() {
+    const files = [{
+      validated: true,
+      fileName: 'main.jsbundle',
+      mappedFile: './test/fixtures/builds/react-native/android/index.android.bundle.map'
+    }];
+
+    const signedUrlUploader = new SignedUrlUploader({ manifestData: manifestData });
+    signedUrlUploader.mapFiles(files);
+    signedUrlUploader.zipFiles();
+
+    expect(Object.keys(readZip(signedUrlUploader.zipBuffer))).to.have.members(['manifest.json', 'main.jsbundle.map']);
   });
 
   it('should start a new archive on each call', async function() {
@@ -111,7 +154,7 @@ describe('.zipFiles()', function() {
 
   it('should report files it cannot read and zip the rest', async function() {
     const status = sinon.spy(global.output, 'status');
-    const files = [{ validated: true, mappedFile: path.join(targetPath, 'missing.js.map') }];
+    const files = [{ validated: true, fileName: 'missing.js', mappedFile: path.join(targetPath, 'missing.js.map') }];
 
     const signedUrlUploader = new SignedUrlUploader({ manifestData: manifestData });
     signedUrlUploader.mapFiles(files);
