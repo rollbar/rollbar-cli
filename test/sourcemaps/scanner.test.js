@@ -3,6 +3,9 @@
 /* globals beforeEach */
 
 const expect = require('chai').expect;
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const sinon = require('sinon');
 
 const Scanner = require('../../src/sourcemaps/scanner');
@@ -199,6 +202,25 @@ describe('.scan()', function() {
 
     expect(files[3].fileName).to.equal('static/js/main.d504f0ad.chunk.js');
     expect(files[3].mappedFile).to.equal('test/fixtures/builds/react16/build/static/js/main.d504f0ad.chunk.js.map');
+  });
+
+  it('should use an absolute sourceMappingURL as the mapped file', async function() {
+    const mapPath = path.resolve('test/fixtures/builds/react-native/ios/main.jsbundle.map');
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rollbar-cli-'));
+    const bundlePath = path.join(tmpDir, 'main.jsbundle');
+    fs.writeFileSync(bundlePath, 'App();\n//# sourceMappingURL=' + mapPath + '\n');
+
+    try {
+      const scanner = new Scanner({ targetPath: bundlePath });
+      await scanner.scan();
+      const files = scanner.mappedFiles();
+
+      expect(files.length).to.equal(1);
+      expect(files[0].mappedFile).to.equal(mapPath);
+      expect(files[0].validated).to.be.true;
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 
   it('should warn when several maps upload under the same name', function() {

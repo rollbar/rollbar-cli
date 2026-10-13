@@ -87,7 +87,8 @@ class Scanner {
     if(mapPath) {
       output.status('', mapPath);
       file.mapPathName = mapPath;
-      file.mappedFile = path.join(path.dirname(file.filePathName), mapPath);
+      // An absolute sourceMappingURL is used as is; anything else is relative to the bundle.
+      file.mappedFile = path.isAbsolute(mapPath) ? mapPath : path.join(path.dirname(file.filePathName), mapPath);
 
     } else {
       output.warn('', 'map not found');
@@ -97,9 +98,8 @@ class Scanner {
   async loadMapData(file) {
     if (file.mapPathName) {
       try {
-        const filePath = path.dirname(file.filePathName);
-        const mapPath = path.resolve(filePath, file.mapPathName);
-        const data = fs.readFileSync(mapPath).toString();
+        // Read the same path the --next zip uses, so a validated map is always zipped.
+        const data = fs.readFileSync(file.mappedFile).toString();
 
         if (data) {
           file.mapData = data;
