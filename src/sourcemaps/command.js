@@ -30,6 +30,12 @@ exports.builder = function (yargs) {
     type: 'string',
     demandOption: true
   })
+  .option('bundle-name', {
+    describe: 'Bundle the map is for, when <path> is a single map not named <bundle>.map, e.g. main.jsbundle',
+    requiresArg: true,
+    type: 'string',
+    demandOption: false
+  })
   .option('next', {
     describe: 'Next version. Zip all the source map files and upload as one file',
     requiresArg: false,
@@ -53,7 +59,8 @@ exports.handler = async function (argv) {
 
   const scanner = new Scanner({
     targetPath: argv['path'],
-    sources: argv['sources']
+    sources: argv['sources'],
+    bundleName: argv['bundle-name']
   });
 
   await scanner.scan();

@@ -1,0 +1,1 @@
+{"version":3,"sources":["App.js","index.js"],"sourcesContent":["export default function App() {\n  throw new Error(\"boom\");\n}\n","import App from \"./App\";\nApp();\n"],"names":["App"],"mappings":"AAAA,SAASA;ACAT"}

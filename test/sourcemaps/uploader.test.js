@@ -69,6 +69,110 @@ describe('.upload()', function() {
     stub.restore();
   });
 
+  it('should upload a React Native bundle map under reactnativehost', async function() {
+    const scanner = new Scanner({
+      targetPath: './test/fixtures/builds/react-native/ios/main.jsbundle'
+    });
+    await scanner.scan();
+
+    const uploader = new Uploader({
+      accessToken: 'abcd',
+      baseUrl: 'http://reactnativehost',
+      codeVersion: '123'
+    });
+    const stub = sinon.stub(uploader.rollbarAPI, 'sourcemaps');
+    stub.resolves(null);
+
+    uploader.mapFiles(scanner.mappedFiles());
+
+    await uploader.upload();
+
+    expect(stub.callCount).to.equal(1);
+    const request = stub.firstCall.args[0];
+    // rollbar-react-native reports iOS frames as http://reactnativehost/main.jsbundle.
+    expect(request.minified_url).to.equal('http://reactnativehost/main.jsbundle');
+    expect(JSON.parse(request.source_map).file).to.equal('main.jsbundle');
+
+    stub.restore();
+  });
+
+  it('should upload React Native bundles in subdirectories under their bundle name', async function() {
+    const scanner = new Scanner({
+      targetPath: './test/fixtures/builds/react-native'
+    });
+    await scanner.scan();
+
+    const uploader = new Uploader({
+      accessToken: 'abcd',
+      baseUrl: 'http://reactnativehost/',
+      codeVersion: '123'
+    });
+    const stub = sinon.stub(uploader.rollbarAPI, 'sourcemaps');
+    stub.resolves(null);
+
+    uploader.mapFiles(scanner.mappedFiles());
+
+    await uploader.upload();
+
+    expect(stub.callCount).to.equal(2);
+    expect(stub.getCalls().map((call) => call.args[0].minified_url)).to.have.members([
+      'http://reactnativehost/index.android.bundle',
+      'http://reactnativehost/main.jsbundle'
+    ]);
+
+    stub.restore();
+  });
+
+  it('should upload a React Native map file for the bundle it is named after', async function() {
+    const scanner = new Scanner({
+      targetPath: './test/fixtures/builds/react-native/android/index.android.bundle.map'
+    });
+    await scanner.scan();
+
+    const uploader = new Uploader({
+      accessToken: 'abcd',
+      baseUrl: 'http://reactnativehost/',
+      codeVersion: '123'
+    });
+    const stub = sinon.stub(uploader.rollbarAPI, 'sourcemaps');
+    stub.resolves(null);
+
+    uploader.mapFiles(scanner.mappedFiles());
+
+    await uploader.upload();
+
+    expect(stub.callCount).to.equal(1);
+    expect(stub.firstCall.args[0].minified_url).to.equal('http://reactnativehost/index.android.bundle');
+
+    stub.restore();
+  });
+
+  it('should upload a map not named after its bundle for --bundle-name', async function() {
+    const scanner = new Scanner({
+      targetPath: './test/fixtures/builds/react-native-sourcemap/sourcemap.ios.js',
+      bundleName: 'main.jsbundle'
+    });
+    await scanner.scan();
+
+    // The --url-prefix from #16, without a trailing slash.
+    const uploader = new Uploader({
+      accessToken: 'abcd',
+      baseUrl: 'http://reactnativehost',
+      codeVersion: '123'
+    });
+    const stub = sinon.stub(uploader.rollbarAPI, 'sourcemaps');
+    stub.resolves(null);
+
+    uploader.mapFiles(scanner.mappedFiles());
+
+    await uploader.upload();
+
+    expect(stub.callCount).to.equal(1);
+    expect(stub.firstCall.args[0].minified_url).to.equal('http://reactnativehost/main.jsbundle');
+
+    stub.restore();
+  });
+
   it('should handle and report API errors', async function() {
     const scannerOptions = {
       targetPath: './test/fixtures/builds/react16/build',

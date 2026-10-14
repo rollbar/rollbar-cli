@@ -2,6 +2,7 @@
 
 const AdmZip = require('adm-zip');
 const axios = require('axios');
+const path = require('path');
 
 class SignedUrlUploader {
   constructor(requester) {
@@ -30,7 +31,9 @@ class SignedUrlUploader {
       for (const file of this.files) {
         try {
           if (file.validated) {
-            zipFile.addLocalFile(file.mappedFile);
+            // The server uploads each entry for <url-prefix><entry name without .map>, so name
+            // it after fileName, the same name the standard upload uses as minified_url.
+            zipFile.addLocalFile(file.mappedFile, '', file.fileName.split(path.sep).join('/') + '.map');
           }
         } catch(e) {
           output.status('Error', e.message);
