@@ -6,7 +6,7 @@ const exec = require('child_process').exec;
 const execSync = require('child_process').execSync;
 
 describe('rollbar-cli upload-sourcemaps', function() {
-  it('returns help output', done => {
+  it('returns help output', function(done) {
     this.timeout(5000);
 
     exec('./bin/rollbar upload-sourcemaps --help', 'utf8', (_err, stdout, _stderr) => {
