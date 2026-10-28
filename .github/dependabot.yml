@@ -1,0 +1,17 @@
+# Batches Dependabot security fixes into a single PR per run instead of one PR per package.
+# open-pull-requests-limit: 0 turns off routine version-update PRs; security updates are not
+# affected by that limit and still open, grouped by the npm-security group below.
+# For more information see: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/dependabot-options-reference
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      npm-security:
+        applies-to: security-updates
+        patterns:
+          - "*"
