@@ -13,6 +13,11 @@ const { expectNoPartOf, collector } = require('./helpers');
 const TOKEN = '0123456789abcdef0123456789abcdef';
 const PUBLIC_ID = '0372a8619ebcbbcd91abcda1ba389ac3';
 
+// The command line as typed, after node and the script.
+function args(...words) {
+  return ['token-public-id'].concat(words);
+}
+
 function argv(extra) {
   return Object.assign({ _: ['token-public-id'], $0: 'rollbar-cli' }, extra);
 }
@@ -55,7 +60,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints the public ID alone on stdout', async function() {
-      const code = Command.run(argv(), this.io);
+      const code = Command.run(argv(), this.io, args());
       this.pipe(`${TOKEN}\n`);
 
       expect(await code).to.equal(0);
@@ -64,7 +69,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints warnings on stderr', async function() {
-      const code = Command.run(argv(), this.io);
+      const code = Command.run(argv(), this.io, args());
       this.pipe(` ${TOKEN.toUpperCase()}`);
 
       expect(await code).to.equal(0);
@@ -74,7 +79,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints the token type on stderr when verbose', async function() {
-      const code = Command.run(argv({ v: true, verbose: true }), this.io);
+      const code = Command.run(argv({ v: true, verbose: true }), this.io, args('-v'));
       this.pipe(TOKEN);
 
       expect(await code).to.equal(0);
@@ -82,7 +87,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints neither warnings nor the token type when quiet', async function() {
-      const code = Command.run(argv({ q: true, quiet: true, v: true, verbose: true }), this.io);
+      const code = Command.run(argv({ q: true, quiet: true, v: true, verbose: true }), this.io, args('-q', '-v'));
       this.pipe(` ${TOKEN.toUpperCase()}`);
 
       expect(await code).to.equal(0);
@@ -91,7 +96,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints errors when quiet', async function() {
-      const code = Command.run(argv({ q: true, quiet: true }), this.io);
+      const code = Command.run(argv({ q: true, quiet: true }), this.io, args('-q'));
       this.pipe(`"${TOKEN}"`);
 
       expect(await code).to.equal(1);
@@ -101,7 +106,7 @@ describe('token-public-id Command()', function() {
     it('accepts the global options', async function() {
       const code = Command.run(argv({
         v: false, verbose: false, q: false, quiet: false, h: false, help: false, version: false
-      }), this.io);
+      }), this.io, args('--no-verbose', '--no-quiet', '--no-help', '--no-version'));
       this.pipe(TOKEN);
 
       expect(await code).to.equal(0);
@@ -119,7 +124,7 @@ describe('token-public-id Command()', function() {
 
       Object.keys(cases).forEach(function (name) {
         it(name, async function() {
-          const code = Command.run(argv(cases[name]), this.io);
+          const code = Command.run(argv(cases[name]), this.io, args(name));
           this.pipe(TOKEN);
 
           expect(await code).to.equal(0);
@@ -129,7 +134,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints why the input isn\'t a token', async function() {
-      const code = Command.run(argv(), this.io);
+      const code = Command.run(argv(), this.io, args());
       this.pipe(`"${TOKEN}"`);
 
       expect(await code).to.equal(1);
@@ -144,7 +149,7 @@ describe('token-public-id Command()', function() {
       this.stdin.resume = function () {};
       this.stdin.pause = function () {};
 
-      const code = Command.run(argv(), this.io);
+      const code = Command.run(argv(), this.io, args());
       this.stdin.emit('data', Buffer.from('abc\x03'));
 
       expect(await code).to.equal(130);
@@ -154,7 +159,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints only the code of an unexpected error, not its message', async function() {
-      const code = Command.run(argv(), this.io);
+      const code = Command.run(argv(), this.io, args());
       const error = new Error(`read ${TOKEN}`);
       error.code = 'EIO';
       this.stdin.emit('error', error);
@@ -165,7 +170,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints nothing of an unexpected error without a code', async function() {
-      const code = Command.run(argv(), this.io);
+      const code = Command.run(argv(), this.io, args());
       this.stdin.emit('error', new Error(TOKEN));
 
       expect(await code).to.equal(1);
@@ -174,7 +179,7 @@ describe('token-public-id Command()', function() {
     });
 
     it('prints the message of an error that is safe to show', async function() {
-      const code = Command.run(argv(), this.io);
+      const code = Command.run(argv(), this.io, args());
       this.stdin.emit('data', Buffer.alloc(MAX_INPUT_BYTES + 1, 0x61));
 
       expect(await code).to.equal(1);
@@ -182,19 +187,22 @@ describe('token-public-id Command()', function() {
     });
 
     describe('refuses a token on the command line', function() {
+      // Each is [the command line as yargs parses it, the command line as typed].
       const cases = {
-        'as a positional argument': argv({ _: ['token-public-id', TOKEN] }),
-        'as --access-token': argv({ 'access-token': TOKEN, accessToken: TOKEN }),
-        'as --token': argv({ token: TOKEN }),
-        'as an option name': argv({ [TOKEN]: true }),
-        'in uppercase': argv({ _: ['token-public-id', TOKEN.toUpperCase()] }),
-        'as the value of --color': argv({ color: TOKEN }),
-        'as the value of a flag': argv({ v: TOKEN, verbose: TOKEN }),
+        'as a positional argument': [argv({ _: ['token-public-id', TOKEN] }), args(TOKEN)],
+        'as --access-token': [argv({ 'access-token': TOKEN, accessToken: TOKEN }), args('--access-token', TOKEN)],
+        'as --token': [argv({ token: TOKEN }), args('--token', TOKEN)],
+        'as an option name': [argv({ [TOKEN]: true }), args(`--${TOKEN}`)],
+        'in uppercase': [argv({ _: ['token-public-id', TOKEN.toUpperCase()] }), args(TOKEN.toUpperCase())],
+        'as the value of --color': [argv({ color: TOKEN }), args('--color', TOKEN)],
+        // yargs reads text joined to a flag as false, the same as --no-verbose.
+        'joined to --verbose': [argv({ v: false, verbose: false }), args(`--verbose=${TOKEN}`)],
+        'joined to -h': [argv({ h: false, help: false }), args(`-h=${TOKEN}`)],
       };
 
       Object.keys(cases).forEach(function (name) {
         it(name, async function() {
-          const code = await Command.run(cases[name], this.io);
+          const code = await Command.run(cases[name][0], this.io, cases[name][1]);
 
           expect(code).to.equal(1);
           expect(this.stdin.listenerCount('data')).to.equal(0);
@@ -209,15 +217,15 @@ describe('token-public-id Command()', function() {
 
     describe('refuses other arguments without suggesting rotating a token', function() {
       const cases = {
-        'a positional argument': argv({ _: ['token-public-id', 'abc'] }),
-        'a misspelled option': argv({ verbse: true }),
-        'an option with a short hex value': argv({ token: 'deadbeef' }),
-        'a color value chalk doesn\'t take': argv({ color: 'blue' }),
+        'a positional argument': [argv({ _: ['token-public-id', 'abc'] }), args('abc')],
+        'a misspelled option': [argv({ verbse: true }), args('--verbse')],
+        'an option with a short hex value': [argv({ token: 'deadbeef' }), args('--token', 'deadbeef')],
+        'a color value chalk doesn\'t take': [argv({ color: 'blue' }), args('--color=blue')],
       };
 
       Object.keys(cases).forEach(function (name) {
         it(name, async function() {
-          const code = await Command.run(cases[name], this.io);
+          const code = await Command.run(cases[name][0], this.io, cases[name][1]);
 
           expect(code).to.equal(1);
           expect(this.stdin.listenerCount('data')).to.equal(0);

@@ -153,6 +153,21 @@ describe('readSecret()', function() {
       expect((await this.read).toString()).to.equal('abcdef');
     });
 
+    it('handles a control character after a lone Esc', async function() {
+      this.type('ab\x1b\x7fc\x1b[\x15de\x1b\r');
+
+      expect((await this.read).toString()).to.equal('de');
+    });
+
+    it('is cancelled by Ctrl-C after a lone Esc', async function() {
+      this.type('abc\x1b\x03');
+
+      const err = await this.read.then(() => null, (e) => e);
+
+      expect(err).to.be.an.instanceOf(PromptCancelled);
+      expectRestored(this);
+    });
+
     it('is cancelled by Ctrl-C', async function() {
       const chunk = this.type('abc\x03def');
 

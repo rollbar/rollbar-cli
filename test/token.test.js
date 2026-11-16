@@ -95,6 +95,8 @@ describe('rollbar-cli token-public-id', function() {
     'as a positional argument': [LEGACY],
     'after --': ['--', LEGACY],
     'as the value of --color': ['--color', LEGACY],
+    'joined to --verbose': [`--verbose=${LEGACY}`],
+    'joined to -h': [`-h=${LEGACY}`],
   };
 
   Object.keys(onCommandLine).forEach(function (name) {

@@ -99,7 +99,15 @@ function readTerminal(stdin, stderr, prompt) {
       }
     }
 
-    function handleEscape(b) {
+    // Whether b is part of the escape sequence we're in, moving on through it.
+    // A control character (Enter, Ctrl-C, Backspace and so on) never is: it ends
+    // the sequence and is handled as usual, so a lone Esc can't swallow it. Any
+    // other byte after a lone Esc is taken as Alt with that key, and ignored.
+    function continuesEscape(b) {
+      if (b < 0x20 || b === 0x7f) {
+        escape = null;
+        return false;
+      }
       if (escape === 'esc') {
         escape = b === 0x5b ? 'csi' : b === 0x4f ? 'ss3' : null;
       } else if (escape === 'csi') {
@@ -107,11 +115,11 @@ function readTerminal(stdin, stderr, prompt) {
       } else {
         escape = null;
       }
+      return true;
     }
 
     function handleByte(b) {
-      if (escape) {
-        handleEscape(b);
+      if (escape && continuesEscape(b)) {
         return null;
       }
 

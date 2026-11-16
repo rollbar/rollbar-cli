@@ -55,16 +55,12 @@ function hasArguments(argv) {
   });
 }
 
-// Whether any argument, option name or option value has a run of hex as long as
-// a token. Only then is the token likely to have been typed on the command line.
-function hasTokenLikeArgument(argv) {
-  const args = Object.assign({}, argv);
-  delete args.$0;
-  return TOKEN_LIKE.test(JSON.stringify(args));
-}
-
-function refusal(argv) {
-  return hasTokenLikeArgument(argv) ? `${REFUSAL} ${ROTATE} ${HOW_TO}` : `${REFUSAL} ${HOW_TO}`;
+// Whether any word on the command line has a run of hex as long as a token.
+// Only then is the token likely to have been typed there.
+function hasTokenLikeArgument(args) {
+  return args.some(function (arg) {
+    return TOKEN_LIKE.test(arg);
+  });
 }
 
 function errorMessage(err) {
@@ -82,10 +78,17 @@ function errorMessage(err) {
  * public ID is printed, 1 when there's no valid token to read, and 130 when the
  * prompt is cancelled with Ctrl-C. --quiet leaves out the warnings and the
  * --verbose token type, but not errors.
+ *
+ * `argv` is the command line as yargs parsed it, and `args` is the command line
+ * as typed, after node and the script. Both are checked for a token: yargs reads
+ * text joined to a flag, as in --verbose=<token>, as false, which leaves no
+ * trace of it in `argv`.
  */
-async function run(argv, io) {
-  if (hasArguments(argv)) {
-    io.stderr.write(chalk.stderr.red(refusal(argv)) + '\n');
+async function run(argv, io, args) {
+  const tokenLike = hasTokenLikeArgument(args);
+  if (tokenLike || hasArguments(argv)) {
+    const refusal = tokenLike ? `${REFUSAL} ${ROTATE} ${HOW_TO}` : `${REFUSAL} ${HOW_TO}`;
+    io.stderr.write(chalk.stderr.red(refusal) + '\n');
     return 1;
   }
 
@@ -122,5 +125,5 @@ exports.handler = async function (argv) {
     stdin: process.stdin,
     stdout: process.stdout,
     stderr: process.stderr
-  });
+  }, process.argv.slice(2));
 };
