@@ -5,22 +5,18 @@
 // prompt on stderr and raw-mode input that isn't echoed, not even as asterisks.
 // Every buffer the secret passes through is zeroed once it has been copied on.
 
+const { SafeMessageError } = require('./errors');
+
 const MAX_INPUT_BYTES = 1024;
 
 const SUBMIT = 'submit';
 const CANCEL = 'cancel';
 
-class SecretInputError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'SecretInputError';
-  }
-}
+class SecretInputError extends SafeMessageError {}
 
-class PromptCancelled extends Error {
+class PromptCancelled extends SafeMessageError {
   constructor() {
     super('Cancelled.');
-    this.name = 'PromptCancelled';
   }
 }
 

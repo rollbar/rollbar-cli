@@ -163,7 +163,7 @@ Options:
   --version      Show version number                                   [boolean]
   -v, --verbose  Verbose status output                                 [boolean]
   -q, --quiet    Silent status output                                  [boolean]
-  --help         Show help                                             [boolean]
+  -h, --help     Show help                                             [boolean]
 ```
 
 The token is a secret, so it isn't taken as an argument, which would leave it in your shell history. Instead, the command reads it from stdin when stdin is piped or redirected, or else prompts for it without echoing what you type. Nothing is sent over the network.
@@ -178,9 +178,11 @@ echo "$ROLLBAR_TOKEN" | rollbar-cli token-public-id
 
 Don't `echo` the token itself into the command: that puts it in your shell history too.
 
-The public ID is printed alone on stdout, so it can be captured with `$(...)`. Warnings and errors go to stderr. It works for both kinds of token: a legacy token has 32 hexadecimal characters, and a v2 token has 96.
+The public ID is printed alone on stdout, so it can be captured with `$(...)`. Warnings and errors go to stderr. `--verbose` also prints the token's type, and `--quiet` leaves out warnings and the type but not errors. It works for every kind of token: legacy and v1 tokens have 32 hexadecimal characters, and v2 tokens have 96. Rollbar labels a 32-character token either legacy or v1, and the token alone doesn't say which, so its type is printed as `legacy or v1`.
 
 When the input isn't a valid token, the error says what's wrong with it, such as its length and the position of each character that isn't hexadecimal (a quote, a space, a zero-width space, and so on), without repeating the token. The command warns, but still prints the public ID, when the token has uppercase letters or whitespace around it, since Rollbar may reject a token configured that way.
+
+Any argument other than the global options (and `--color` or `--no-color`) is refused before the token is read. When something on the command line looks like a token, the error suggests rotating it, since it may now be in your shell history.
 
 ## Release History & Changelog
 

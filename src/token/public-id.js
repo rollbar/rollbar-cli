@@ -1,24 +1,31 @@
 'use strict';
 
 const crypto = require('crypto');
+const { SafeMessageError } = require('./errors');
 
 // A Rollbar access token is one of two lengths of lowercase hex. Its public ID
 // is derived the same way Rollbar derives it:
 //
-//   legacy, 32 characters: the first 32 hex digits of SHA-512(token)
-//   v2, 96 characters:     the token's first 32 characters; the other 64 are the secret
+//   32 characters, legacy or v1: the first 32 hex digits of SHA-512(token)
+//   96 characters, v2:           the token's first 32 characters; the other 64 are the secret
+//
+// Rollbar labels a 32-character token either legacy or v1, and the token alone
+// doesn't say which.
 //
 // The token is a secret. It stays in Buffers, which are zeroed once used, and is
 // never turned into a string, written out, or put in an error message. Error
 // messages say what is wrong with the input (its length, and the position and
 // kind of each character that isn't hex) without repeating any of it.
 
-const LEGACY_LENGTH = 32;
+const LEGACY_OR_V1_LENGTH = 32;
 const V2_LENGTH = 96;
 const PUBLIC_ID_LENGTH = 32;
 const MAX_LISTED_PROBLEMS = 10;
 
-const EXPECTED = 'A Rollbar access token has 32 (legacy) or 96 (v2) hexadecimal characters (0-9, a-f).';
+const LEGACY_OR_V1 = 'legacy or v1';
+const V2 = 'v2';
+
+const EXPECTED = `A Rollbar access token has 32 (${LEGACY_OR_V1}) or 96 (${V2}) hexadecimal characters (0-9, a-f).`;
 
 // Characters that are invisible or look like ASCII, and so turn up in tokens
 // copied from documents and chat. Any other non-ASCII character goes unnamed:
@@ -39,12 +46,7 @@ const NAMED_NON_ASCII = {
   0x2014: 'em dash',
 };
 
-class TokenFormatError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'TokenFormatError';
-  }
-}
+class TokenFormatError extends SafeMessageError {}
 
 function isWhitespace(b) {
   return b === 0x20 || (b >= 0x09 && b <= 0x0d);
@@ -98,6 +100,19 @@ function sequenceLength(b) {
   return 1;
 }
 
+// The byte length of the character at input[i]: its lead byte, and the
+// continuation bytes (10xxxxxx) after it that its sequence calls for. It stops
+// at a byte that can't continue the sequence, so a byte that isn't UTF-8, such
+// as Latin-1, doesn't swallow the characters after it.
+function characterLength(input, i, end) {
+  const expected = sequenceLength(input[i]);
+  let length = 1;
+  while (length < expected && i + length < end && (input[i + length] & 0xc0) === 0x80) {
+    length++;
+  }
+  return length;
+}
+
 function describeAscii(b) {
   if (b === 0x20) return 'space';
   if (b === 0x09) return 'tab';
@@ -138,7 +153,7 @@ function inspect(input, start, end) {
       }
       i++;
     } else {
-      const length = Math.min(sequenceLength(b), end - i);
+      const length = characterLength(input, i, end);
       problems.push({ position: characters, description: describeNonAscii(input, i, length) });
       i += length;
     }
@@ -186,8 +201,9 @@ function whitespaceWarning(leading, trailing) {
 /**
  * Derives the public ID of the Rollbar access token in `input`, a Buffer.
  *
- * Returns { type, publicId, warnings }: type is 'legacy' or 'v2', and each
- * warning is a message about something in the input that Rollbar may reject.
+ * Returns { type, publicId, warnings }: type is 'legacy or v1' for a
+ * 32-character token, or 'v2' for a 96-character one, and each warning is a
+ * message about something in the input that Rollbar may reject.
  * Throws a TokenFormatError, whose message is safe to show, when the input isn't
  * a token. Never modifies `input`; the caller zeroes it.
  */
@@ -199,7 +215,7 @@ function publicIdFromToken(input) {
     throw new TokenFormatError(`No access token: the input is empty. ${EXPECTED}`);
   }
 
-  let valid = length === LEGACY_LENGTH || length === V2_LENGTH;
+  let valid = length === LEGACY_OR_V1_LENGTH || length === V2_LENGTH;
   let uppercase = false;
   for (let i = start; valid && i < end; i++) {
     valid = isHexDigit(input[i]);
@@ -226,12 +242,12 @@ function publicIdFromToken(input) {
       warnings.push('The token has uppercase letters, but Rollbar issues tokens in lowercase and may reject it as typed. This is the public ID of the lowercase token.');
     }
 
-    if (length === LEGACY_LENGTH) {
+    if (length === LEGACY_OR_V1_LENGTH) {
       const hash = crypto.createHash('sha512').update(token).digest('hex');
-      return { type: 'legacy', publicId: hash.slice(0, PUBLIC_ID_LENGTH), warnings };
+      return { type: LEGACY_OR_V1, publicId: hash.slice(0, PUBLIC_ID_LENGTH), warnings };
     }
 
-    return { type: 'v2', publicId: token.toString('ascii', 0, PUBLIC_ID_LENGTH), warnings };
+    return { type: V2, publicId: token.toString('ascii', 0, PUBLIC_ID_LENGTH), warnings };
   } finally {
     token.fill(0);
   }

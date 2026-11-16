@@ -1,18 +1,27 @@
 'use strict';
 
 const chalk = require('chalk');
-const { publicIdFromToken, TokenFormatError } = require('./public-id');
-const { readSecret, SecretInputError, PromptCancelled } = require('./read-secret');
+const { SafeMessageError } = require('./errors');
+const { publicIdFromToken } = require('./public-id');
+const { readSecret, PromptCancelled } = require('./read-secret');
 
 const PROMPT = 'Rollbar access token: ';
 
-// The global options. Anything else on the command line might be the token.
-const ALLOWED_KEYS = ['_', '$0', 'v', 'verbose', 'q', 'quiet', 'help', 'version'];
+// The options the command line may have, all flags. chalk reads --color and
+// --colors from process.argv itself. Anything else on the command line might be
+// the token.
+const FLAGS = ['v', 'verbose', 'q', 'quiet', 'h', 'help', 'version', 'color', 'colors'];
+const COLOR_FLAGS = ['color', 'colors'];
+// The values chalk takes for --color=, other than a flag's true and false.
+const COLOR_VALUES = ['true', 'false', 'always', 'never', '256', '16m', 'full', 'truecolor'];
 
-// It doesn't repeat what was on the command line: that might be the token.
-const REFUSAL = 'token-public-id takes no arguments, and didn\'t read a token from them. ' +
-  'If you typed the token on the command line, it may now be in your shell history; consider rotating it. ' +
-  'Pipe the token to stdin, or run the command with no arguments to be prompted for it.';
+// A run of hex as long as the shortest token.
+const TOKEN_LIKE = /[0-9a-f]{32}/i;
+
+// The refusal doesn't repeat what was on the command line: that might be the token.
+const REFUSAL = 'token-public-id takes no arguments, and didn\'t read a token from them.';
+const ROTATE = 'If you typed the token on the command line, it may now be in your shell history; consider rotating it.';
+const HOW_TO = 'Pipe the token to stdin, or run the command with no arguments to be prompted for it.';
 
 exports.command = 'token-public-id';
 
@@ -20,6 +29,7 @@ exports.describe = 'Print the public ID of a Rollbar access token';
 
 exports.builder = function (yargs) {
   return yargs
+    .alias('h', 'help')
     .example('$0 token-public-id', 'Prompt for the token')
     .example('$0 token-public-id < token.txt', 'Read the token from a file')
     .example('pbpaste | $0 token-public-id', 'Read the token from the clipboard (macOS)')
@@ -28,14 +38,37 @@ exports.builder = function (yargs) {
       'The public ID is printed to stdout, and warnings and errors to stderr. Nothing is sent over the network.');
 };
 
-function tokenOnCommandLine(argv) {
+function isAllowed(key, value) {
+  if (key === '_' || key === '$0') {
+    return true;
+  }
+  if (FLAGS.indexOf(key) === -1) {
+    return false;
+  }
+  return typeof value === 'boolean' ||
+    (COLOR_FLAGS.indexOf(key) !== -1 && COLOR_VALUES.indexOf(String(value)) !== -1);
+}
+
+function hasArguments(argv) {
   return argv._.length > 1 || Object.keys(argv).some(function (key) {
-    return ALLOWED_KEYS.indexOf(key) === -1;
+    return !isAllowed(key, argv[key]);
   });
 }
 
+// Whether any argument, option name or option value has a run of hex as long as
+// a token. Only then is the token likely to have been typed on the command line.
+function hasTokenLikeArgument(argv) {
+  const args = Object.assign({}, argv);
+  delete args.$0;
+  return TOKEN_LIKE.test(JSON.stringify(args));
+}
+
+function refusal(argv) {
+  return hasTokenLikeArgument(argv) ? `${REFUSAL} ${ROTATE} ${HOW_TO}` : `${REFUSAL} ${HOW_TO}`;
+}
+
 function errorMessage(err) {
-  if (err instanceof TokenFormatError || err instanceof SecretInputError || err instanceof PromptCancelled) {
+  if (err instanceof SafeMessageError) {
     return err.message;
   }
 
@@ -47,11 +80,12 @@ function errorMessage(err) {
 /**
  * Runs the command with the given streams, and returns its exit code: 0 once the
  * public ID is printed, 1 when there's no valid token to read, and 130 when the
- * prompt is cancelled with Ctrl-C.
+ * prompt is cancelled with Ctrl-C. --quiet leaves out the warnings and the
+ * --verbose token type, but not errors.
  */
 async function run(argv, io) {
-  if (tokenOnCommandLine(argv)) {
-    io.stderr.write(chalk.stderr.red(REFUSAL) + '\n');
+  if (hasArguments(argv)) {
+    io.stderr.write(chalk.stderr.red(refusal(argv)) + '\n');
     return 1;
   }
 
@@ -60,11 +94,13 @@ async function run(argv, io) {
     input = await readSecret({ stdin: io.stdin, stderr: io.stderr, prompt: PROMPT });
     const result = publicIdFromToken(input);
 
-    result.warnings.forEach(function (warning) {
-      io.stderr.write(chalk.stderr.yellow(`Warning: ${warning}`) + '\n');
-    });
-    if (argv.verbose) {
-      io.stderr.write(`Token type: ${result.type}\n`);
+    if (!argv.quiet) {
+      result.warnings.forEach(function (warning) {
+        io.stderr.write(chalk.stderr.yellow(`Warning: ${warning}`) + '\n');
+      });
+      if (argv.verbose) {
+        io.stderr.write(`Token type: ${result.type}\n`);
+      }
     }
 
     io.stdout.write(result.publicId + '\n');

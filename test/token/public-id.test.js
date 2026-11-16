@@ -4,7 +4,7 @@
 const expect = require('chai').expect;
 
 const { publicIdFromToken, TokenFormatError } = require('../../src/token/public-id');
-const { expectNoPartOf } = require('./no-leak');
+const { expectNoPartOf } = require('./helpers');
 
 // Patterned tokens, not random ones, so that secret scanners don't take them for
 // real. Each expected public ID is from `printf %s <token> | shasum -a 512 | cut -c1-32`,
@@ -34,10 +34,10 @@ function errorFor(input) {
 }
 
 describe('publicIdFromToken()', function() {
-  describe('a legacy token', function() {
+  describe('a legacy or v1 token', function() {
     Object.keys(LEGACY).forEach(function (token) {
       it(`is the start of the SHA-512 of ${token.slice(0, 8)}...`, function() {
-        expect(derive(token)).to.deep.equal({ type: 'legacy', publicId: LEGACY[token], warnings: [] });
+        expect(derive(token)).to.deep.equal({ type: 'legacy or v1', publicId: LEGACY[token], warnings: [] });
       });
     });
 
@@ -116,7 +116,7 @@ describe('publicIdFromToken()', function() {
     it('is hex of the wrong length', function() {
       expect(errorFor(TOKEN + 'a')).to.equal(
         'Not a Rollbar access token: it has 33 characters. ' +
-        'A Rollbar access token has 32 (legacy) or 96 (v2) hexadecimal characters (0-9, a-f).'
+        'A Rollbar access token has 32 (legacy or v1) or 96 (v2) hexadecimal characters (0-9, a-f).'
       );
       expect(errorFor('a')).to.have.string('it has 1 character.');
     });
@@ -124,7 +124,7 @@ describe('publicIdFromToken()', function() {
     it('has characters that are not hex, listed by position and kind', function() {
       expect(errorFor(`"${TOKEN}"`)).to.equal(
         'Not a Rollbar access token: it has 34 characters, and 2 of them aren\'t hexadecimal. ' +
-        'A Rollbar access token has 32 (legacy) or 96 (v2) hexadecimal characters (0-9, a-f).\n' +
+        'A Rollbar access token has 32 (legacy or v1) or 96 (v2) hexadecimal characters (0-9, a-f).\n' +
         '  character 1: quote\n' +
         '  character 34: quote'
       );
@@ -190,6 +190,20 @@ describe('publicIdFromToken()', function() {
 
       expect(message).to.have.string('character 33: byte that isn\'t valid UTF-8\n');
       expect(message).to.have.string('character 34: byte that isn\'t valid UTF-8');
+    });
+
+    it('counts a byte that isn\'t UTF-8 as one character, without the ones after it', function() {
+      const latin1 = errorFor(Buffer.concat([Buffer.from([0xe9]), Buffer.from(TOKEN)]));
+
+      expect(latin1).to.have.string('it has 33 characters, and 1 of them isn\'t hexadecimal.');
+      expect(latin1).to.have.string('character 1: byte that isn\'t valid UTF-8');
+
+      const inside = errorFor(Buffer.concat([
+        Buffer.from(TOKEN.slice(0, 10)), Buffer.from([0xe2, 0x80]), Buffer.from(TOKEN.slice(10))
+      ]));
+
+      expect(inside).to.have.string('it has 33 characters, and 1 of them isn\'t hexadecimal.');
+      expect(inside).to.have.string('character 11: byte that isn\'t valid UTF-8');
     });
 
     it('lists at most ten characters', function() {

@@ -13,6 +13,8 @@ const {
   MAX_INPUT_BYTES
 } = require('../../src/token/read-secret');
 
+const { collector } = require('./helpers');
+
 const PROMPT = 'Token: ';
 
 function pipe() {
@@ -28,13 +30,6 @@ function terminal() {
   stdin.resume = sinon.spy();
   stdin.pause = sinon.spy();
   return stdin;
-}
-
-function collector() {
-  return {
-    text: '',
-    write(s) { this.text += s; }
-  };
 }
 
 function isZeroed(buffer) {

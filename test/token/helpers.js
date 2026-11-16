@@ -9,4 +9,12 @@ function expectNoPartOf(text, secret) {
   }
 }
 
-module.exports = { expectNoPartOf };
+// A writable stream's stand-in that keeps what's written to it in `text`.
+function collector() {
+  return {
+    text: '',
+    write(s) { this.text += s; }
+  };
+}
+
+module.exports = { expectNoPartOf, collector };

@@ -5,7 +5,7 @@ const expect = require('chai').expect;
 const path = require('path');
 const spawnSync = require('child_process').spawnSync;
 
-const { expectNoPartOf } = require('./token/no-leak');
+const { expectNoPartOf } = require('./token/helpers');
 
 const BIN = path.join(__dirname, '..', 'bin', 'rollbar');
 
@@ -27,11 +27,32 @@ function run(args, input) {
 describe('rollbar-cli token-public-id', function() {
   this.timeout(10000);
 
-  it('returns help output', function() {
-    const result = run(['--help']);
+  ['--help', '-h'].forEach(function (flag) {
+    it(`returns help output for ${flag}`, function() {
+      const result = run([flag]);
 
-    expect(result.status).to.equal(0);
-    expect(result.stdout).to.have.string('token-public-id');
+      expect(result.status).to.equal(0);
+      expect(result.stdout).to.have.string('token-public-id');
+      expect(result.stdout).to.have.string('-h, --help');
+    });
+  });
+
+  ['--color', '--no-color', '--color=256'].forEach(function (flag) {
+    it(`accepts ${flag}, which chalk reads`, function() {
+      const result = run([flag], `${LEGACY}\n`);
+
+      expect(result.status).to.equal(0);
+      expect(result.stdout).to.equal(`${LEGACY_PUBLIC_ID}\n`);
+    });
+  });
+
+  it('refuses an argument that isn\'t a token without suggesting rotating one', function() {
+    const result = run(['--verbse'], `${LEGACY}\n`);
+
+    expect(result.status).to.equal(1);
+    expect(result.stdout).to.equal('');
+    expect(result.stderr).to.have.string('takes no arguments');
+    expect(result.stderr).not.to.have.string('rotating');
   });
 
   it('prints the public ID of a legacy token piped to stdin', function() {
@@ -73,6 +94,7 @@ describe('rollbar-cli token-public-id', function() {
     'as --token': ['--token', LEGACY],
     'as a positional argument': [LEGACY],
     'after --': ['--', LEGACY],
+    'as the value of --color': ['--color', LEGACY],
   };
 
   Object.keys(onCommandLine).forEach(function (name) {
@@ -82,6 +104,7 @@ describe('rollbar-cli token-public-id', function() {
       expect(result.status).to.equal(1);
       expect(result.stdout).to.equal('');
       expect(result.stderr).to.have.string('takes no arguments');
+      expect(result.stderr).to.have.string('consider rotating it');
       expectNoPartOf(result.output, LEGACY);
     });
   });
