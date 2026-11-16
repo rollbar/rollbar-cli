@@ -151,6 +151,37 @@ Output on success:
          Deploy successful
 ```
 
+### token-public-id
+Print the public ID of a Rollbar access token. The public ID names a token without giving it away, so it's safe to put in a ticket, a log or a chat.
+
+```
+rollbar-cli token-public-id
+
+Print the public ID of a Rollbar access token
+
+Options:
+  --version      Show version number                                   [boolean]
+  -v, --verbose  Verbose status output                                 [boolean]
+  -q, --quiet    Silent status output                                  [boolean]
+  --help         Show help                                             [boolean]
+```
+
+The token is a secret, so it isn't taken as an argument, which would leave it in your shell history. Instead, the command reads it from stdin when stdin is piped or redirected, or else prompts for it without echoing what you type. Nothing is sent over the network.
+
+Examples:
+```
+rollbar-cli token-public-id                    # prompt for the token
+rollbar-cli token-public-id < token.txt        # read it from a file
+pbpaste | rollbar-cli token-public-id          # read it from the clipboard (macOS)
+echo "$ROLLBAR_TOKEN" | rollbar-cli token-public-id
+```
+
+Don't `echo` the token itself into the command: that puts it in your shell history too.
+
+The public ID is printed alone on stdout, so it can be captured with `$(...)`. Warnings and errors go to stderr. It works for both kinds of token: a legacy token has 32 hexadecimal characters, and a v2 token has 96.
+
+When the input isn't a valid token, the error says what's wrong with it, such as its length and the position of each character that isn't hexadecimal (a quote, a space, a zero-width space, and so on), without repeating the token. The command warns, but still prints the public ID, when the token has uppercase letters or whitespace around it, since Rollbar may reject a token configured that way.
+
 ## Release History & Changelog
 
 See our [Releases](https://github.com/rollbar/rollbar-cli/releases) page for a list of all releases, including changes.
