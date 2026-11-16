@@ -147,6 +147,12 @@ describe('readSecret()', function() {
       expect((await this.read).toString()).to.equal('de');
     });
 
+    it('starts over after Ctrl-U, even when the input was too long', async function() {
+      this.type('a'.repeat(MAX_INPUT_BYTES + 1) + '\x15abc\r');
+
+      expect((await this.read).toString()).to.equal('abc');
+    });
+
     it('ignores escape sequences and other control characters', async function() {
       this.type('a\x1b[Db\x1b[1;5Cc\x1bOAd\x1bxe\tf\x00\r');
 

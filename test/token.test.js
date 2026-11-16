@@ -46,13 +46,15 @@ describe('rollbar-cli token-public-id', function() {
     });
   });
 
-  it('refuses an argument that isn\'t a token without suggesting rotating one', function() {
-    const result = run(['--verbse'], `${LEGACY}\n`);
+  ['--verbse', '--verbose=foo'].forEach(function (arg) {
+    it(`refuses ${arg} without suggesting rotating a token`, function() {
+      const result = run([arg], `${LEGACY}\n`);
 
-    expect(result.status).to.equal(1);
-    expect(result.stdout).to.equal('');
-    expect(result.stderr).to.have.string('takes no arguments');
-    expect(result.stderr).not.to.have.string('rotating');
+      expect(result.status).to.equal(1);
+      expect(result.stdout).to.equal('');
+      expect(result.stderr).to.have.string('takes no arguments');
+      expect(result.stderr).not.to.have.string('rotating');
+    });
   });
 
   it('prints the public ID of a legacy token piped to stdin', function() {

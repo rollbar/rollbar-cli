@@ -187,22 +187,22 @@ describe('token-public-id Command()', function() {
     });
 
     describe('refuses a token on the command line', function() {
-      // Each is [the command line as yargs parses it, the command line as typed].
       const cases = {
-        'as a positional argument': [argv({ _: ['token-public-id', TOKEN] }), args(TOKEN)],
-        'as --access-token': [argv({ 'access-token': TOKEN, accessToken: TOKEN }), args('--access-token', TOKEN)],
-        'as --token': [argv({ token: TOKEN }), args('--token', TOKEN)],
-        'as an option name': [argv({ [TOKEN]: true }), args(`--${TOKEN}`)],
-        'in uppercase': [argv({ _: ['token-public-id', TOKEN.toUpperCase()] }), args(TOKEN.toUpperCase())],
-        'as the value of --color': [argv({ color: TOKEN }), args('--color', TOKEN)],
+        'as a positional argument': args(TOKEN),
+        'as --access-token': args('--access-token', TOKEN),
+        'as --token': args('--token', TOKEN),
+        'as an option name': args(`--${TOKEN}`),
+        'in uppercase': args(TOKEN.toUpperCase()),
+        'as the value of --color': args('--color', TOKEN),
         // yargs reads text joined to a flag as false, the same as --no-verbose.
-        'joined to --verbose': [argv({ v: false, verbose: false }), args(`--verbose=${TOKEN}`)],
-        'joined to -h': [argv({ h: false, help: false }), args(`-h=${TOKEN}`)],
+        'joined to --verbose': args(`--verbose=${TOKEN}`),
+        'joined to -h': args(`-h=${TOKEN}`),
+        'before the command': [TOKEN, 'token-public-id'],
       };
 
       Object.keys(cases).forEach(function (name) {
         it(name, async function() {
-          const code = await Command.run(cases[name][0], this.io, cases[name][1]);
+          const code = await Command.run(argv(), this.io, cases[name]);
 
           expect(code).to.equal(1);
           expect(this.stdin.listenerCount('data')).to.equal(0);
@@ -217,15 +217,17 @@ describe('token-public-id Command()', function() {
 
     describe('refuses other arguments without suggesting rotating a token', function() {
       const cases = {
-        'a positional argument': [argv({ _: ['token-public-id', 'abc'] }), args('abc')],
-        'a misspelled option': [argv({ verbse: true }), args('--verbse')],
-        'an option with a short hex value': [argv({ token: 'deadbeef' }), args('--token', 'deadbeef')],
-        'a color value chalk doesn\'t take': [argv({ color: 'blue' }), args('--color=blue')],
+        'a positional argument': args('abc'),
+        'a misspelled option': args('--verbse'),
+        'an option with a short hex value': args('--token', 'deadbeef'),
+        'a color value chalk doesn\'t take': args('--color=blue'),
+        'text joined to a flag': args('--verbose=foo'),
+        'an unknown short flag': args('-vx'),
       };
 
       Object.keys(cases).forEach(function (name) {
         it(name, async function() {
-          const code = await Command.run(cases[name][0], this.io, cases[name][1]);
+          const code = await Command.run(argv(), this.io, cases[name]);
 
           expect(code).to.equal(1);
           expect(this.stdin.listenerCount('data')).to.equal(0);
@@ -234,6 +236,15 @@ describe('token-public-id Command()', function() {
           expect(this.io.stderr.text).not.to.have.string('rotating');
         });
       });
+    });
+
+    it('accepts the global flags before the command, alone or combined', async function() {
+      const code = Command.run(argv({ v: true, verbose: true, q: true, quiet: true }), this.io,
+        ['-vq', 'token-public-id', '--no-color']);
+      this.pipe(TOKEN);
+
+      expect(await code).to.equal(0);
+      expect(this.io.stdout.text).to.equal(`${PUBLIC_ID}\n`);
     });
   });
 });

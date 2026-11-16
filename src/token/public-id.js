@@ -162,16 +162,34 @@ function inspect(input, start, end) {
   return { characters, problems };
 }
 
-function formatError(input, start, end) {
+// How much whitespace was ignored, and where, as in "2 whitespace characters
+// before the token and 1 after it".
+function ignoredWhitespace(leading, trailing, what) {
+  if (leading && trailing) {
+    return `${plural(leading, 'whitespace character')} before ${what} and ${trailing} after it`;
+  }
+  if (leading) {
+    return `${plural(leading, 'whitespace character')} before ${what}`;
+  }
+  return `${plural(trailing, 'whitespace character')} after ${what}`;
+}
+
+function formatError(input, start, end, leading, trailing) {
   const { characters, problems } = inspect(input, start, end);
 
+  // The length and positions leave out the whitespace around the input, so say so.
+  let length = `it has ${plural(characters, 'character')}`;
+  if (leading || trailing) {
+    length += ` (not counting ${ignoredWhitespace(leading, trailing, 'it')})`;
+  }
+
   if (problems.length === 0) {
-    return `Not a Rollbar access token: it has ${plural(characters, 'character')}. ${EXPECTED}`;
+    return `Not a Rollbar access token: ${length}. ${EXPECTED}`;
   }
 
   const notHex = problems.length === 1 ? '1 of them isn\'t' : `${problems.length} of them aren't`;
   const lines = [
-    `Not a Rollbar access token: it has ${plural(characters, 'character')}, and ${notHex} hexadecimal. ${EXPECTED}`
+    `Not a Rollbar access token: ${length}, and ${notHex} hexadecimal. ${EXPECTED}`
   ];
 
   problems.slice(0, MAX_LISTED_PROBLEMS).forEach(function (problem) {
@@ -185,17 +203,9 @@ function formatError(input, start, end) {
 }
 
 function whitespaceWarning(leading, trailing) {
-  let where;
-  if (leading && trailing) {
-    where = `${plural(leading, 'whitespace character')} before the token and ${trailing} after it`;
-  } else if (leading) {
-    where = `${plural(leading, 'whitespace character')} before the token`;
-  } else {
-    where = `${plural(trailing, 'whitespace character')} after the token`;
-  }
-
   const they = leading + trailing === 1 ? 'it\'s' : 'they\'re';
-  return `Ignored ${where}. Rollbar may reject the token if ${they} part of the value you configured.`;
+  return `Ignored ${ignoredWhitespace(leading, trailing, 'the token')}. ` +
+    `Rollbar may reject the token if ${they} part of the value you configured.`;
 }
 
 /**
@@ -223,7 +233,7 @@ function publicIdFromToken(input) {
   }
 
   if (!valid) {
-    throw new TokenFormatError(formatError(input, start, end));
+    throw new TokenFormatError(formatError(input, start, end, leading, trailing));
   }
 
   // Rollbar issues tokens in lowercase, so the lowercase token is the one that

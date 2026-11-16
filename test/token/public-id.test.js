@@ -206,6 +206,17 @@ describe('publicIdFromToken()', function() {
       expect(inside).to.have.string('character 11: byte that isn\'t valid UTF-8');
     });
 
+    it('says how much whitespace around it the length and positions leave out', function() {
+      expect(errorFor(`  "${TOKEN}" \n`)).to.have.string(
+        'it has 34 characters (not counting 2 whitespace characters before it and 1 after it), ' +
+        'and 2 of them aren\'t hexadecimal.'
+      );
+      expect(errorFor(`  "${TOKEN}"`)).to.have.string('character 1: quote');
+      expect(errorFor(` ${TOKEN}a`)).to.have.string('it has 33 characters (not counting 1 whitespace character before it).');
+      expect(errorFor(`${TOKEN}a\t`)).to.have.string('it has 33 characters (not counting 1 whitespace character after it).');
+      expect(errorFor(`${TOKEN}a\n`)).to.have.string('it has 33 characters.');
+    });
+
     it('lists at most ten characters', function() {
       const message = errorFor('z'.repeat(32));
 

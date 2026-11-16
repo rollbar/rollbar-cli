@@ -7,13 +7,20 @@ const { readSecret, PromptCancelled } = require('./read-secret');
 
 const PROMPT = 'Rollbar access token: ';
 
-// The options the command line may have, all flags. chalk reads --color and
-// --colors from process.argv itself. Anything else on the command line might be
-// the token.
-const FLAGS = ['v', 'verbose', 'q', 'quiet', 'h', 'help', 'version', 'color', 'colors'];
-const COLOR_FLAGS = ['color', 'colors'];
-// The values chalk takes for --color=, other than a flag's true and false.
-const COLOR_VALUES = ['true', 'false', 'always', 'never', '256', '16m', 'full', 'truecolor'];
+// The words the command line may have, as typed: the command, the global flags
+// (-v, -q and -h, alone or combined), and --color in the forms that chalk reads
+// from process.argv itself. Anything else might be the token.
+//
+// These are checked against the command line as typed, not as yargs parsed it:
+// yargs reads text joined to a flag, as in --verbose=<text>, as false, and drops
+// the text.
+const ALLOWED_WORDS = [
+  /^token-public-id$/,
+  /^-[vqh]+$/,
+  /^--(no-)?(verbose|quiet|help|version)$/,
+  /^--(no-)?colors?$/,
+  /^--colors?=(true|false|always|never|256|16m|full|truecolor)$/,
+];
 
 // A run of hex as long as the shortest token.
 const TOKEN_LIKE = /[0-9a-f]{32}/i;
@@ -38,20 +45,11 @@ exports.builder = function (yargs) {
       'The public ID is printed to stdout, and warnings and errors to stderr. Nothing is sent over the network.');
 };
 
-function isAllowed(key, value) {
-  if (key === '_' || key === '$0') {
-    return true;
-  }
-  if (FLAGS.indexOf(key) === -1) {
-    return false;
-  }
-  return typeof value === 'boolean' ||
-    (COLOR_FLAGS.indexOf(key) !== -1 && COLOR_VALUES.indexOf(String(value)) !== -1);
-}
-
-function hasArguments(argv) {
-  return argv._.length > 1 || Object.keys(argv).some(function (key) {
-    return !isAllowed(key, argv[key]);
+function hasArguments(args) {
+  return args.some(function (arg) {
+    return !ALLOWED_WORDS.some(function (allowed) {
+      return allowed.test(arg);
+    });
   });
 }
 
@@ -79,15 +77,12 @@ function errorMessage(err) {
  * prompt is cancelled with Ctrl-C. --quiet leaves out the warnings and the
  * --verbose token type, but not errors.
  *
- * `argv` is the command line as yargs parsed it, and `args` is the command line
- * as typed, after node and the script. Both are checked for a token: yargs reads
- * text joined to a flag, as in --verbose=<token>, as false, which leaves no
- * trace of it in `argv`.
+ * `args` is the command line as typed, after node and the script, and `argv` is
+ * the same command line as yargs parsed it.
  */
 async function run(argv, io, args) {
-  const tokenLike = hasTokenLikeArgument(args);
-  if (tokenLike || hasArguments(argv)) {
-    const refusal = tokenLike ? `${REFUSAL} ${ROTATE} ${HOW_TO}` : `${REFUSAL} ${HOW_TO}`;
+  if (hasArguments(args)) {
+    const refusal = hasTokenLikeArgument(args) ? `${REFUSAL} ${ROTATE} ${HOW_TO}` : `${REFUSAL} ${HOW_TO}`;
     io.stderr.write(chalk.stderr.red(refusal) + '\n');
     return 1;
   }

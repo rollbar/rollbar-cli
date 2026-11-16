@@ -140,6 +140,7 @@ function readTerminal(stdin, stderr, prompt) {
         case 0x15: // Ctrl-U
           buffer.fill(0);
           length = 0;
+          overflow = false;
           return null;
       }
 
