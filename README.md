@@ -20,7 +20,7 @@ npm install -g rollbar-cli
 ```
 
 ## Usage and Reference
-Currently upload-sourcemaps and notify-deploy commands are supported.
+Currently upload-sourcemaps, notify-deploy and token-public-id commands are supported.
 
 ### upload-sourcemaps
 Upload source maps for a build directory (scanned recursively), a single bundle file, or a

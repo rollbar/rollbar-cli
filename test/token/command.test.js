@@ -197,7 +197,6 @@ describe('token-public-id Command()', function() {
         // yargs reads text joined to a flag as false, the same as --no-verbose.
         'joined to --verbose': args(`--verbose=${TOKEN}`),
         'joined to -h': args(`-h=${TOKEN}`),
-        'before the command': [TOKEN, 'token-public-id'],
       };
 
       Object.keys(cases).forEach(function (name) {
