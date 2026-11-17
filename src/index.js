@@ -20,6 +20,7 @@ function cli() {
     })
     .command(require('./sourcemaps/command'))
     .command(require('./deploy/command'))
+    .command(require('./token/command'))
       .help()
       .argv
 

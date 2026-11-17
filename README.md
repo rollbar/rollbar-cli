@@ -20,7 +20,7 @@ npm install -g rollbar-cli
 ```
 
 ## Usage and Reference
-Currently upload-sourcemaps and notify-deploy commands are supported.
+Currently upload-sourcemaps, notify-deploy and token-public-id commands are supported.
 
 ### upload-sourcemaps
 Upload source maps for a build directory (scanned recursively), a single bundle file, or a
@@ -150,6 +150,39 @@ Output on success:
          { deploy_id: 12345678 }
          Deploy successful
 ```
+
+### token-public-id
+Print the public ID of a Rollbar access token. The public ID names a token without giving it away, so it's safe to put in a ticket, a log or a chat.
+
+```
+rollbar-cli token-public-id
+
+Print the public ID of a Rollbar access token
+
+Options:
+  --version      Show version number                                   [boolean]
+  -v, --verbose  Verbose status output                                 [boolean]
+  -q, --quiet    Silent status output                                  [boolean]
+  -h, --help     Show help                                             [boolean]
+```
+
+The token is a secret, so it isn't taken as an argument, which would leave it in your shell history. Instead, the command reads it from stdin when stdin is piped or redirected, or else prompts for it without echoing what you type. Nothing is sent over the network.
+
+Examples:
+```
+rollbar-cli token-public-id                    # prompt for the token
+rollbar-cli token-public-id < token.txt        # read it from a file
+pbpaste | rollbar-cli token-public-id          # read it from the clipboard (macOS)
+echo "$ROLLBAR_TOKEN" | rollbar-cli token-public-id
+```
+
+Don't `echo` the token itself into the command: that puts it in your shell history too.
+
+The public ID is printed alone on stdout, so it can be captured with `$(...)`. Warnings and errors go to stderr. `--verbose` also prints the token's type, and `--quiet` leaves out warnings and the type but not errors. It works for every kind of token: legacy and v1 tokens have 32 hexadecimal characters, and v2 tokens have 96. Rollbar labels a 32-character token either legacy or v1, and the token alone doesn't say which, so its type is printed as `legacy or v1`.
+
+When the input isn't a valid token, the error says what's wrong with it, such as its length and the position of each character that isn't hexadecimal (a quote, a space, a zero-width space, and so on), without repeating the token. The command warns, but still prints the public ID, when the token has uppercase letters or whitespace around it, since Rollbar may reject a token configured that way.
+
+Any argument other than the global options (and `--color` or `--no-color`) is refused before the token is read. When something on the command line looks like a token, the error suggests rotating it, since it may now be in your shell history.
 
 ## Release History & Changelog
 
