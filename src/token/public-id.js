@@ -64,8 +64,8 @@ function isLetter(b) {
   return (b >= 0x41 && b <= 0x5a) || (b >= 0x61 && b <= 0x7a);
 }
 
-function plural(n, word) {
-  return `${n} ${word}${n === 1 ? '' : 's'}`;
+function plural(n, singular, pluralForm = `${singular}s`) {
+  return `${n} ${n === 1 ? singular : pluralForm}`;
 }
 
 // Where the token starts and ends once surrounding ASCII whitespace is removed,
